@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Saindo do Vermelho — Guia prático</title>
+<style>
+  @page { size: A4; margin: 0; }
+  :root { --ink:#14202e; --muted:#5b6b7d; --line:#d9dee5; --soft:#f5f1ea; --ouro:#e0a12b; --laranja:#e8743b; --verde:#2f9e6b; --verm:#d4403f; --azul:#3f6fa8; --navy:#0c1828; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Inter", "Liberation Sans", sans-serif; color: var(--ink); font-size: 11pt; line-height: 1.45; background:#fff; }
+  .pg { width: 210mm; height: 297mm; padding: 16mm 16mm 14mm; position: relative; page-break-after: always; overflow: hidden; }
+  .pg:last-child { page-break-after: auto; }
+  .rod { position:absolute; bottom: 8mm; left:16mm; right:16mm; display:flex; justify-content:space-between; font-size:8.5pt; color: var(--muted); border-top:1px solid var(--line); padding-top:3mm; }
+  h1 { font-size: 34pt; line-height:1.05; margin:0; font-weight:900; letter-spacing:-.5px; }
+  h2 { font-size: 20pt; margin: 0 0 4mm; font-weight:900; letter-spacing:-.3px; }
+  h3 { font-size: 12.5pt; margin: 5mm 0 2mm; font-weight:800; }
+  p { margin: 0 0 3mm; }
+  .tag { display:inline-block; font-size:8.5pt; font-weight:800; letter-spacing:1px; text-transform:uppercase; color: var(--laranja); margin-bottom:2mm; }
+  .fala { background: var(--soft); border-left: 4px solid var(--ouro); padding: 3mm 4mm; border-radius: 0 6px 6px 0; font-style: italic; margin: 3mm 0; }
+  table { width:100%; border-collapse: collapse; font-size: 10pt; }
+  th { text-align:left; font-size:8.5pt; text-transform:uppercase; letter-spacing:.6px; color: var(--muted); border-bottom: 2px solid var(--ink); padding: 2mm 2mm; }
+  td { border-bottom: 1px solid var(--line); padding: 2.4mm 2mm; height: 9mm; }
+  td.num, th.num { text-align:right; font-variant-numeric: tabular-nums; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .stat { border:1px solid var(--line); border-radius: 10px; padding: 4mm; }
+  .stat b { display:block; font-size: 24pt; font-weight:900; line-height:1.1; }
+  .stat span { font-size: 9.5pt; }
+  .stat small { display:block; color: var(--muted); font-size: 8pt; margin-top: 2mm; }
+  .passo { display:flex; gap: 4mm; margin-bottom: 4.2mm; }
+  .passo .n { flex: 0 0 11mm; height: 11mm; border-radius: 50%; background: var(--ouro); color: var(--navy); font-weight:900; font-size: 15pt; display:flex; align-items:center; justify-content:center; }
+  .passo b { font-size: 12pt; }
+  .caixa { border: 1.5px solid var(--line); border-radius: 10px; padding: 4mm 5mm; }
+  .caixa.verde { border-color: var(--verde); }
+  .caixa.verm { border-color: var(--verm); background:#fdf3f3; }
+  .caixa.ouro { border-color: var(--ouro); background:#fdf8ee; }
+  ul.check { list-style:none; padding:0; margin: 0; }
+  ul.check li { padding-left: 8mm; position: relative; margin-bottom: 2.2mm; }
+  ul.check li::before { content:""; position:absolute; left:0; top: .5mm; width: 4.2mm; height: 4.2mm; border: 1.5px solid var(--ink); border-radius: 3px; }
+  .capa { background: var(--navy); color: #f6f1e8; padding: 22mm 18mm; }
+  .capa .sol { position:absolute; right: -25mm; top: 125mm; width: 130mm; height: 130mm; border-radius: 50%; background: radial-gradient(circle, #ffd678 0 45%, rgba(232,116,59,.35) 46% 70%, transparent 71%); }
+  .capa .morro { position:absolute; left:0; right:0; bottom:0; height: 90mm; background: linear-gradient(#e8743b, #7a3524); clip-path: polygon(0 40%, 18% 22%, 35% 38%, 55% 15%, 75% 35%, 100% 20%, 100% 100%, 0 100%); }
+  .capa h1 { font-size: 46pt; color:#fff; position:relative; }
+  .capa .sub { font-size: 15pt; color: #c9d3de; margin-top: 6mm; position:relative; max-width: 130mm; }
+  .capa .canal { position:absolute; bottom: 22mm; left: 18mm; color: #fff; font-weight:800; font-size: 13pt; z-index:2; }
+  .capa .canal small { display:block; font-weight:500; font-size:10pt; color:#ffe8c8; }
+  .dias { display:grid; grid-template-columns: repeat(5, 1fr); gap: 2.5mm; }
+  .dia { border:1px solid var(--line); border-radius: 6px; height: 30mm; padding: 1.5mm 2mm; font-size: 8pt; color: var(--muted); font-weight:700; }
+  .mini { font-size: 9pt; color: var(--muted); }
+  .bar { height: 5mm; background: var(--azul); border-radius: 0 3px 3px 0; display:inline-block; vertical-align: middle; }
+  a { color: var(--azul); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- 1. CAPA -->
+<section class="pg capa">
+  <div class="sol"></div>
+  <div class="tag" style="color:#ffd678;position:relative">Material de apoio · grátis</div>
+  <h1>Saindo do<br>Vermelho</h1>
+  <div class="sub">Guia prático pra quem ganha pouco, tá endividado e quer um plano que caiba na vida real. Com planilhas pra imprimir e preencher a lápis.</div>
+  <div class="morro"></div>
+  <div class="canal">Do Sertão ao Saldo<small>finanças de gente simples, com dado de verdade · edição nov/2026</small></div>
+</section>
+
+<!-- 2. NÚMEROS -->
+<section class="pg">
+  <div class="tag">Antes de tudo</div>
+  <h2>Tu não tá sozinho (e não é burrice)</h2>
+  <p>Se a dívida tá tirando teu sono, olha o tamanho do problema no Brasil. Isso não é desculpa pra cruzar os braços, é pra tirar a culpa das costas e botar a cabeça no plano.</p>
+  <div class="grid2" style="margin:5mm 0">
+    <div class="stat"><b style="color:var(--verm)">84,2 milhões</b><span>de brasileiros com conta atrasada, recorde.</span><small>Serasa, divulgado em nov/2026</small></div>
+    <div class="stat"><b style="color:var(--laranja)">81,6%</b><span>das famílias têm alguma dívida; 29,3% estão com conta em atraso.</span><small>CNC/Peic, out/2026</small></div>
+    <div class="stat"><b style="color:var(--ouro)">48%</b><span>dos inadimplentes ganham até 1 salário mínimo.</span><small>Serasa, Mapa da Inadimplência 2026</small></div>
+    <div class="stat"><b style="color:var(--azul)">R$ 1.621</b><span>é o salário mínimo de 2026.</span><small>Decreto 12.797/2025</small></div>
+  </div>
+  <h3>O vilão tem nome: juros do rotativo</h3>
+  <p>Quando tu paga só o mínimo da fatura, o resto entra no <b>rotativo</b>. Em junho de 2026 a taxa média estava em <b>442,4% ao ano</b> (Banco Central), o que dá cerca de <b>15% ao mês</b>. A poupança rende menos de 1% ao mês.</p>
+  <p>Desde janeiro de 2024, a <b>Lei 14.690/2023</b> limita os juros e encargos do rotativo e do parcelamento da fatura a <b>100% do valor original</b>. Ajuda, mas ainda é dívida dobrando:</p>
+  <table>
+    <tr><th>Mês</th><th class="num">Sem limite (15,1% a.m.)</th><th class="num">Com o teto da lei</th><th class="num">Na poupança (≈0,67% a.m.)</th></tr>
+    <tr><td>Início</td><td class="num">R$ 1.000</td><td class="num">R$ 1.000</td><td class="num">R$ 1.000</td></tr>
+    <tr><td>Mês 2</td><td class="num">R$ 1.326</td><td class="num">R$ 1.326</td><td class="num">R$ 1.013</td></tr>
+    <tr><td>Mês 4</td><td class="num">R$ 1.757</td><td class="num">R$ 1.757</td><td class="num">R$ 1.027</td></tr>
+    <tr><td>Mês 6</td><td class="num">R$ 2.329</td><td class="num"><b>R$ 2.000</b> (teto)</td><td class="num">R$ 1.041</td></tr>
+    <tr><td>Mês 12</td><td class="num">R$ 5.424</td><td class="num"><b>R$ 2.000</b> (teto)</td><td class="num">R$ 1.083</td></tr>
+  </table>
+  <p class="mini" style="margin-top:2mm">Simulação didática com taxa média. A taxa do teu cartão pode ser diferente: confere na fatura (campo “CET”).</p>
+  <div class="fala">Pagar o mínimo do cartão não é pagar. É afundar devagarinho.</div>
+  <div class="rod"><span>Saindo do Vermelho · Do Sertão ao Saldo</span><span>2</span></div>
+</section>
+
+<!-- 3. 6 PASSOS -->
+<section class="pg">
+  <div class="tag">O plano</div>
+  <h2>Os 6 passos, resumidinho</h2>
+  <div class="passo"><div class="n">1</div><div><b>Raio-X.</b> Anota todo gasto por 30 dias (página 6). Lista cada dívida: credor, valor, juros e atraso (página 5). Consulta o <b>Registrato</b> do Banco Central, de graça: lá aparece todo empréstimo e cartão no teu CPF.</div></div>
+  <div class="passo"><div class="n">2</div><div><b>Estanca o sangramento.</b> Guarda o cartão. Nada de dívida nova pra pagar dívida velha, a não ser pra trocar uma dívida cara por uma bem mais barata (ex.: sair do rotativo pra um crédito com juros muito menores).</div></div>
+  <div class="passo"><div class="n">3</div><div><b>Orçamento de quem ganha pouco.</b> Primeiro o que te mantém vivo e trabalhando: moradia, comida, luz, água, transporte. Só o que <i>sobra</i> vai pra dívida. E sempre um tiquinho pro cofrinho (página 4).</div></div>
+  <div class="passo"><div class="n">4</div><div><b>A ordem de pagar.</b> Primeiro as contas que tiram teu chão (aluguel, água, luz, pensão). Depois escolhe: <b>avalanche</b> (maior juros primeiro, economiza mais) ou <b>bola de neve</b> (menor dívida primeiro, dá ânimo). O melhor é o que tu consegue manter.</div></div>
+  <div class="passo"><div class="n">5</div><div><b>Negocia sem cair em golpe.</b> Só em canal oficial. Só fecha parcela que cabe no passo 3. Acordo que tu não paga é dívida nova com outro nome (roteiro de ligação na página 7).</div></div>
+  <div class="passo"><div class="n">6</div><div><b>O primeiro cofrinho.</b> Mesmo pagando dívida, guarda um pouco. R$ 21/mês viram R$ 252 em um ano: é o imprevisto que não te joga de volta no cartão. Quitou tudo? O que ia pro banco agora vem pra ti.</div></div>
+  <div class="caixa ouro" style="margin-top:6mm">
+    <b>Teu direito: Lei do Superendividamento (Lei 14.181/2021).</b> Se as dívidas comem tanto da renda que falta pro básico, tu pode pedir uma <b>repactuação</b> de todas elas de uma vez, no Procon, na Defensoria Pública ou na Justiça. A lei garante o <b>mínimo existencial</b>: nenhum acordo pode te deixar sem o mínimo pra viver.
+  </div>
+  <div class="rod"><span>Saindo do Vermelho · Do Sertão ao Saldo</span><span>3</span></div>
+</section>
+
+<!-- 4. ORÇAMENTO -->
+<section class="pg">
+  <div class="tag">Passo 3 · preenche a lápis</div>
+  <h2>Meu orçamento do mês</h2>
+  <p class="mini">Na coluna “Exemplo” tá o orçamento do vídeo, de quem ganha um salário mínimo. Na coluna “Meu mês”, bota o teu. Ordem: primeiro o essencial, depois dívida, depois o cofrinho.</p>
+  <table>
+    <tr><th>Item</th><th class="num">Exemplo</th><th class="num">Meu mês</th><th class="num">Gastei de verdade</th></tr>
+    <tr><td><b>Quanto entra</b> (salário, bico, benefício)</td><td class="num">R$ 1.621</td><td></td><td></td></tr>
+    <tr><td colspan="4" style="height:6mm;background:var(--soft);font-weight:800;font-size:8.5pt;letter-spacing:.6px">ESSENCIAIS</td></tr>
+    <tr><td>Moradia (aluguel, prestação)</td><td class="num">R$ 450</td><td></td><td></td></tr>
+    <tr><td>Comida (mercado, feira, gás)</td><td class="num">R$ 500</td><td></td><td></td></tr>
+    <tr><td>Luz e água</td><td class="num">R$ 150</td><td></td><td></td></tr>
+    <tr><td>Transporte (passagem, combustível)</td><td class="num">R$ 140</td><td></td><td></td></tr>
+    <tr><td>Celular / internet</td><td class="num">R$ 60</td><td></td><td></td></tr>
+    <tr><td>Remédio / saúde</td><td class="num">—</td><td></td><td></td></tr>
+    <tr><td>Escola / filhos / pensão</td><td class="num">—</td><td></td><td></td></tr>
+    <tr><td><b>Total essenciais</b></td><td class="num"><b>R$ 1.300</b></td><td></td><td></td></tr>
+    <tr><td colspan="4" style="height:6mm;background:var(--soft);font-weight:800;font-size:8.5pt;letter-spacing:.6px">O QUE SOBRA (entra − essenciais)</td></tr>
+    <tr><td><b>Sobra</b></td><td class="num"><b>R$ 321</b></td><td></td><td></td></tr>
+    <tr><td>Pra dívidas (acordos e parcelas)</td><td class="num">R$ 300</td><td></td><td></td></tr>
+    <tr><td>Cofrinho (nunca zero!)</td><td class="num">R$ 21</td><td></td><td></td></tr>
+    <tr><td>Lazer / imprevisto pequeno</td><td class="num">—</td><td></td><td></td></tr>
+  </table>
+  <div class="caixa" style="margin-top:5mm">
+    <b>Se a sobra deu negativa:</b> não é hora de pagar dívida, é hora de proteger o básico. Corta o que dá, busca renda extra e procura o Procon ou a Defensoria pra repactuar pelo superendividamento. Não faz acordo que não cabe.
+  </div>
+  <div class="rod"><span>Saindo do Vermelho · Do Sertão ao Saldo</span><span>4</span></div>
+</section>
+
+<!-- 5. DÍVIDAS -->
+<section class="pg">
+  <div class="tag">Passo 1 e 4 · preenche a lápis</div>
+  <h2>Minha lista de dívidas</h2>
+  <p class="mini">Dica: o Registrato (Banco Central) mostra empréstimos e cartões no teu CPF. Contas de consumo (luz, loja, celular) tu confere na Serasa ou no próprio credor.</p>
+  <table>
+    <tr><th>Com quem</th><th>Tipo</th><th class="num">Quanto devo</th><th class="num">Juros ao mês</th><th class="num">Atrasada há</th><th class="num">Ordem</th></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <h3>Avalanche ou bola de neve? Exemplo do vídeo</h3>
+  <div class="grid2">
+    <div class="caixa" style="border-color:var(--laranja)">
+      <b style="color:var(--laranja)">AVALANCHE</b> · maior juros primeiro<br><span class="mini">economiza mais dinheiro</span>
+      <ol style="margin:2mm 0 0;padding-left:5mm">
+        <li>Cartão (acordo) · R$ 3.200 · 15% a.m.</li>
+        <li>Crediário da loja · R$ 900 · 6% a.m.</li>
+        <li>Empréstimo pessoal · R$ 1.800 · 5% a.m.</li>
+        <li>Conta de celular · R$ 280 · 2% a.m.</li>
+      </ol>
+    </div>
+    <div class="caixa" style="border-color:var(--azul)">
+      <b style="color:var(--azul)">BOLA DE NEVE</b> · menor dívida primeiro<br><span class="mini">dá ânimo: tu vê dívida sumindo</span>
+      <ol style="margin:2mm 0 0;padding-left:5mm">
+        <li>Conta de celular · R$ 280</li>
+        <li>Crediário da loja · R$ 900</li>
+        <li>Empréstimo pessoal · R$ 1.800</li>
+        <li>Cartão (acordo) · R$ 3.200</li>
+      </ol>
+    </div>
+  </div>
+  <p class="mini" style="margin-top:3mm">Nas duas: paga o valor mínimo combinado de todas, e joga todo o extra na primeira da fila. Quitou? O valor dela vai pra próxima.</p>
+  <div class="rod"><span>Saindo do Vermelho · Do Sertão ao Saldo</span><span>5</span></div>
+</section>
+
+<!-- 6. DIÁRIO 30 DIAS -->
+<section class="pg">
+  <div class="tag">Passo 1 · Raio-X</div>
+  <h2>Diário de gastos: 30 dias</h2>
+  <p class="mini">Anota tudo, do pão ao pix pro cunhado. No fim do dia, soma. No fim do mês, tu vai saber pra onde teu dinheiro vai — e é aí que mora a mudança.</p>
+  <div class="dias">
+    <div class="dia">DIA 1</div><div class="dia">DIA 2</div><div class="dia">DIA 3</div><div class="dia">DIA 4</div><div class="dia">DIA 5</div>
+    <div class="dia">DIA 6</div><div class="dia">DIA 7</div><div class="dia">DIA 8</div><div class="dia">DIA 9</div><div class="dia">DIA 10</div>
+    <div class="dia">DIA 11</div><div class="dia">DIA 12</div><div class="dia">DIA 13</div><div class="dia">DIA 14</div><div class="dia">DIA 15</div>
+    <div class="dia">DIA 16</div><div class="dia">DIA 17</div><div class="dia">DIA 18</div><div class="dia">DIA 19</div><div class="dia">DIA 20</div>
+    <div class="dia">DIA 21</div><div class="dia">DIA 22</div><div class="dia">DIA 23</div><div class="dia">DIA 24</div><div class="dia">DIA 25</div>
+    <div class="dia">DIA 26</div><div class="dia">DIA 27</div><div class="dia">DIA 28</div><div class="dia">DIA 29</div><div class="dia">DIA 30</div>
+  </div>
+  <div class="caixa" style="margin-top:5mm"><b>Total do mês: R$ ____________</b> &nbsp;·&nbsp; O que me surpreendeu: ______________________________________</div>
+  <div class="rod"><span>Saindo do Vermelho · Do Sertão ao Saldo</span><span>6</span></div>
+</section>
+
+<!-- 7. NEGOCIAÇÃO -->
+<section class="pg">
+  <div class="tag">Passo 5</div>
+  <h2>Roteiro pra negociar</h2>
+  <p>Liga (ou entra no app) com a lista de dívidas e o orçamento do lado. Fala com calma. Tu não tá pedindo favor: o credor também quer receber.</p>
+  <div class="fala">“Bom dia. Eu quero quitar essa dívida, mas hoje eu só consigo pagar <b>R$ ____ por mês</b> (ou <b>R$ ____ à vista</b>). Qual o melhor desconto que vocês conseguem pra esse valor?”</div>
+  <div class="fala">“Esse valor não cabe no meu orçamento. Tem como aumentar o número de parcelas ou dar mais desconto à vista?”</div>
+  <div class="fala">“Pode me mandar a proposta por escrito, com o valor total, o número de parcelas e o CET, antes de eu fechar?”</div>
+  <h3>Antes de fechar, confere</h3>
+  <ul class="check">
+    <li>A parcela cabe na sobra do meu orçamento (página 4)?</li>
+    <li>Eu sei o <b>valor total</b> que vou pagar no fim, não só a parcela?</li>
+    <li>A proposta veio por escrito, com número de protocolo?</li>
+    <li>O boleto/pix é no nome do credor ou de empresa oficial de cobrança dele?</li>
+    <li>Depois de pagar, guardei todos os comprovantes?</li>
+  </ul>
+  <div class="grid2" style="margin-top:6mm">
+    <div class="caixa verde"><b style="color:var(--verde)">Canais oficiais</b>
+      <ul style="margin:2mm 0 0;padding-left:5mm"><li>App ou agência do teu banco</li><li>Serasa Limpa Nome</li><li>consumidor.gov.br</li><li>Procon da tua cidade</li><li>Defensoria Pública</li></ul></div>
+    <div class="caixa verm"><b style="color:var(--verm)">É golpe se…</b>
+      <ul style="margin:2mm 0 0;padding-left:5mm"><li>pedem pix adiantado pra “limpar teu nome”</li><li>prometem nome limpo em 24h</li><li>mandam link estranho no WhatsApp/SMS</li><li>o pix vai pra pessoa física</li><li>pressionam: “só vale hoje, decide agora”</li></ul></div>
+  </div>
+  <div class="rod"><span>Saindo do Vermelho · Do Sertão ao Saldo</span><span>7</span></div>
+</section>
+
+<!-- 8. AJUDA + DESAFIO + FONTES -->
+<section class="pg">
+  <div class="tag">Pra começar hoje</div>
+  <h2>Desafio dos primeiros 7 dias</h2>
+  <ul class="check">
+    <li>Dia 1: tirei o cartão da carteira (congelador vale!)</li>
+    <li>Dia 2: consultei o Registrato e a Serasa e listei todas as dívidas (página 5)</li>
+    <li>Dia 3: comecei o diário de gastos (página 6)</li>
+    <li>Dia 4: fiz o orçamento do mês e descobri minha sobra (página 4)</li>
+    <li>Dia 5: escolhi: avalanche ou bola de neve</li>
+    <li>Dia 6: liguei pro primeiro credor com o roteiro (página 7)</li>
+    <li>Dia 7: botei o primeiro dinheiro no cofrinho, nem que seja R$ 5</li>
+  </ul>
+  <h3>Onde buscar ajuda (de graça)</h3>
+  <table>
+    <tr><td style="width:42%"><b>Registrato</b> (Banco Central)</td><td>vê todos os empréstimos e cartões no teu CPF · bcb.gov.br/registrato</td></tr>
+    <tr><td><b>consumidor.gov.br</b></td><td>reclamação e negociação direto com a empresa, com registro</td></tr>
+    <tr><td><b>Procon</b></td><td>orientação e audiência de repactuação (superendividamento)</td></tr>
+    <tr><td><b>Defensoria Pública</b></td><td>advogado de graça pra quem não pode pagar</td></tr>
+    <tr><td><b>Serasa Limpa Nome</b></td><td>ofertas de acordo com credores parceiros · feirões periódicos</td></tr>
+  </table>
+  <h3>Fontes dos números</h3>
+  <ol class="mini" style="padding-left:5mm;margin:0">
+    <li>Serasa — inadimplência recorde de 84,2 milhões; valor médio acima de R$ 4 mil (reportagem Band, 03/11/2026).</li>
+    <li>Serasa — 10 anos do Mapa da Inadimplência: 48% dos inadimplentes ganham até 1 salário mínimo (2026).</li>
+    <li>CNC — Pesquisa de Endividamento e Inadimplência do Consumidor (Peic), outubro/2026: 81,6% endividadas, 29,3% em atraso.</li>
+    <li>Banco Central — Estatísticas monetárias e de crédito: rotativo do cartão a 442,4% a.a. em junho/2026.</li>
+    <li>Decreto 12.797/2025 — salário mínimo de R$ 1.621 em 2026.</li>
+    <li>Lei 14.690/2023 — teto de juros e encargos do rotativo e parcelado (100% da dívida).</li>
+    <li>Lei 14.181/2021 — Lei do Superendividamento.</li>
+  </ol>
+  <p class="mini" style="margin-top:4mm">Este material é educativo e não substitui orientação individual. Números conferidos em novembro de 2026; confira sempre a taxa do teu contrato.</p>
+  <div class="rod"><span>Saindo do Vermelho · Do Sertão ao Saldo</span><span>8</span></div>
+</section>
+
+</body>
+</html>
