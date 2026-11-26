@@ -29,17 +29,14 @@ ATTACH = 30        # distância máx. para anexar partícula solta a um quadro
 
 # Faixas (y0, y1, nº de quadros[, cortes x manuais]) de cada folha, lidas do layout.
 REGIONS = {
-    "adriano": [(43, 299, 7), (328, 555, 7), (577, 824, 4), (850, 1081, 5), (1107, 1336, 5, [192, 412, 695, 885]),
-                (1348, 1472, 5, [290, 560, 855, 1015]),
-                (1472, 1710, 5), (1713, 1984, 8)],
-    "rogerio": [(41, 300, 8), (318, 572, 6), (588, 851, 8), (852, 1041, 10), (1057, 1325, 7), (1345, 1538, 8),
-                (1571, 1648, 5), (1649, 1826, 7), (1826, 2000, 8)],
     "angelo":  [(18, 168, 5), (185, 342, 7), (347, 523, 6), (522, 673, 2), (673, 827, 6), (829, 991, 6),
                 (1010, 1138, 4), (1156, 1315, 9), (1341, 1445, 2), (1444, 1613, 7), (1619, 1795, 3), (1800, 1994, 7)],
     "kaisson": [(20, 156, 5), (171, 317, 7), (327, 478, 6), (486, 623, 2), (634, 789, 7), (804, 965, 7), (992, 1088, 6),
                 (1111, 1260, 6), (1272, 1422, 3), (1437, 1573, 6), (1586, 1769, 3), (1784, 1989, 7)],
     "barba":   [(45, 264, 8), (274, 479, 9), (525, 730, 9), (771, 974, 8), (999, 1138, 12), (1159, 1340, 7),
                 (1380, 1536, 7), (1536, 1749, 3), (1756, 1989, 8)],
+    "adriano": [(9, 171, 6), (183, 339, 7), (340, 501, 6), (514, 664, 3), (677, 829, 8), (843, 996, 6), (1014, 1140, 7),
+                (1140, 1313, 5), (1325, 1474, 2), (1495, 1628, 9), (1628, 1794, 4), (1797, 1992, 9)],
     "alicia":  [(13, 227, 6), (249, 430, 8), (455, 625, 2), (625, 789, 3), (813, 984, 5), (1020, 1134, 3),
                 (1174, 1343, 4), (1363, 1535, 7), (1555, 1770, 2), (1770, 1990, 6)],
     "gaby":    [(19, 201, 7), (214, 364, 6), (369, 529, 6), (542, 673, 2), (686, 844, 4), (862, 1026, 9), (1049, 1213, 5),
@@ -50,7 +47,10 @@ REGIONS = {
 # Retângulos (x0, y0, x1, y1) apagados antes de fatiar: títulos que a IA escreveu na folha.
 ERASE = {
     "kaisson": [(0, 0, 205, 2000)],
-    "alicia": [(225, 1766, 390, 1770)],    # separa a 2ª pose de vitória do fogo do K.O. logo abaixo
+    "alicia": [(225, 1766, 390, 1770)],
+    "rogerio": [(0, 0, 262, 40), (0, 312, 212, 350), (0, 588, 60, 624), (60, 588, 122, 607), (0, 826, 192, 860),
+                (0, 952, 154, 988), (0, 1090, 257, 1127), (0, 1228, 314, 1262), (0, 1358, 260, 1394),
+                (416, 1358, 714, 1394), (0, 1565, 168, 1600), (0, 1758, 132, 1794)],    # separa a 2ª pose de vitória do fogo do K.O. logo abaixo
     "barba": [(0, 0, 325, 36), (0, 272, 200, 306), (1262, 270, 1455, 306), (0, 484, 180, 518), (828, 484, 892, 518),
               (0, 734, 282, 768), (0, 972, 292, 1006), (0, 1138, 342, 1172), (0, 1340, 242, 1376),
               (0, 1536, 162, 1570), (0, 1750, 160, 1782)],
@@ -64,8 +64,46 @@ ROW_H = {
     "barba":   {"ref": 210, 1: 172, 5: 182, 6: 182},
     "angelo":  {"ref": 152, 10: 172, 11: 185},
     "kaisson": {"ref": 148, 3: 133, 10: 179, 11: 201},
+    "rogerio": {"ref": 215, 0: 262, 1: 228},
+    "adriano": {"ref": 158, 11: 179},
     "alicia":  {"ref": 210, 2: 190, 3: 190, 4: 190, 5: 190, 6: 190, 7: 190, 9: 217},
 }
+
+# Quadros que a IA desenhou só da cintura para cima: recebem as pernas de um quadro inteiro ("legs").
+COMPOSE = {
+    "rogerio": {"legs": "r02_f03", "frames": ["r03_f00", "r03_f01", "r03_f02", "r04_f00", "r04_f01", "r04_f02",
+                                              "r04_f03", "r06_f00", "r06_f01"]},
+}
+
+
+def add_legs(out, spec):
+    legs = Image.open(out / f"{spec['legs']}.png")
+    lm = np.asarray(legs)[..., 3] > 0
+    for name in spec["frames"]:
+        f = out / f"{name}.png"
+        if not f.exists():
+            continue
+        torso = Image.open(f)
+        tm = np.asarray(torso)[..., 3] > 0
+        th = torso.height
+        # a cintura do tronco (últimas linhas) encaixa na mesma altura do quadro com pernas
+        wy = min(th, legs.height - 1) - 3
+        tx = np.nonzero(tm[-4:].any(axis=0))[0]
+        lx = np.nonzero(lm[wy])[0]
+        if len(tx) == 0 or len(lx) == 0:
+            continue
+        # alinha pela borda de trás (esquerda) da cintura: o tronco pode ter braço/fogo para a frente
+        dx = int(lx.min()) - int(tx.min())
+        x0 = min(0, dx)
+        W = max(torso.width, dx + legs.width) - x0
+        H = wy + (legs.height - wy)
+        H = max(H, th)
+        canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        leg_part = legs.crop((0, wy, legs.width, legs.height))
+        canvas.paste(leg_part, (dx - x0, wy), leg_part)
+        canvas.paste(torso, (-x0, 0), torso)
+        canvas.save(f)
+
 
 # linha usada como referência de altura (a pose de luta); padrão = linha 0
 SCALE_ROW = {"angelo": 1, "kaisson": 1, "barba": 0, "alicia": 0, "gaby": 0}
@@ -273,6 +311,8 @@ def slice_fg(a, fg, name, smart=False):
         print(ri, len(frames), end="  ")
     print()
     (out / "frames.json").write_text(json.dumps(meta, indent=1))
+    if name in COMPOSE:
+        add_legs(out, COMPOSE[name])
     # escala: a pose parada fica com ~112 px de altura, como a Gaby
     hs = sorted(f_["src"][3] for f_ in meta[SCALE_ROW.get(name, 0)]["frames"])
     scale = round(112 / hs[len(hs) // 2], 3)

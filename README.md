@@ -19,8 +19,8 @@ P2: setas · Enter · `.` · `/` (qualquer tecla do P2 assume o lugar da CPU). `
 | Personagem | J | K | L |
 |---|---|---|---|
 | Gaby | chute alto | bola de fogo | gato |
-| Adriano | soco | chute alto | bola de energia |
-| Rogério | soco | sequência de 3 socos | esfera roxa |
+| Adriano | dois socos | gancho voador | bola de energia |
+| Rogério | soco | fogo do notebook | estala os dedos + esfera roxa |
 | Barba | soco | símbolo da IA (ChatGPT) | modo maluco sem camisa |
 | Angelo | soco | foto com flash | queixão |
 | Kaisson | soco | pão que atira | baguete de taco |
@@ -50,8 +50,8 @@ Para regerar os atlas (requer Pillow, numpy, scipy):
 
 ```bash
 for n in gaby barba angelo kaisson alicia; do python3 tools/slice_white.py assets/reference/${n}_sprites_raw.jpg $n --bg magenta; done
-python3 tools/slice_white.py assets/reference/adriano_sprites_raw.jpg adriano
-python3 tools/slice_white.py assets/reference/rogerio_sprites_raw.jpg rogerio
+python3 tools/slice_white.py assets/reference/adriano_sprites_raw.jpg adriano --bg magenta
+python3 tools/slice_white.py assets/reference/rogerio_sprites_raw.jpg rogerio --bg green
 python3 tools/preview_frames.py angelo   # confere os quadros: assets/sprites/angelo/frames/_preview.png
 ```
 
@@ -62,6 +62,6 @@ animações e golpes em `src/characters.js` (os quadros são `rLL_fQQ` = linha, 
 ## Etapas
 
 1. **Gaby** ✅ jogável com os sprites próprios
-2. **Elenco completo (7)** ✅ + tela de seleção · Gaby, Barba e Alicia com as folhas novas do Gemini
+2. **Elenco completo (7)** ✅ + tela de seleção · todos com as folhas novas do Gemini
 3. Cenários: sala de aula e clínica ✅
 4. Tela de título, música animada, sons dos golpes e sangue ✅
