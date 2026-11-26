@@ -154,6 +154,13 @@ def main():
             crop = crop.copy()
             inner = pink & ~bg
             crop[..., 2] = np.where(inner, crop[..., 1], crop[..., 2])
+            # restos da divisória: pedacinhos finos (até 2 px de largura) soltos perto das bordas
+            lab_, nl = ndimage.label(~bg)
+            for k, sl in enumerate(ndimage.find_objects(lab_), 1):
+                w_ = sl[1].stop - sl[1].start
+                near = sl[1].start < 8 or sl[1].stop > bg.shape[1] - 8
+                if w_ <= 2 and near:
+                    bg[sl][lab_[sl] == k] = True
             alpha = np.where(bg, 0, 255).astype(np.uint8)
             img = Image.fromarray(np.dstack([crop.astype(np.uint8), alpha]), "RGBA")
             name = f"r{ri:02d}_f{fi:02d}.png"
