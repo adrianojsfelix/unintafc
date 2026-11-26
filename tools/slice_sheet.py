@@ -175,30 +175,39 @@ if __name__ == "__main__":
     main()
 
 
-def build_atlas():
+def build_atlas(frames_dir=None, dst=None, scale=1.0):
     """Empacota os quadros num atlas único + JSON com retângulo e âncora (pés) de cada quadro."""
-    meta = json.loads((OUT / "frames.json").read_text())
+    frames_dir = frames_dir or OUT
+    dst = dst or ROOT / "assets/sprites/gaby"
+    meta = json.loads((frames_dir / "frames.json").read_text())
     items = []
     for row in meta:
         for f in row["frames"]:
-            im = Image.open(OUT / f["file"])
+            im = Image.open(frames_dir / f["file"])
             bb = im.getchannel("A").getbbox()
             if bb is None:
                 continue  # quadro que ficou vazio (ex.: últimas faíscas da explosão)
             im = im.crop(bb)
+            if scale != 1.0:
+                size = (max(1, round(im.width * scale)), max(1, round(im.height * scale)))
+                rgb = im.convert("RGB").resize(size, Image.Resampling.BOX)
+                al = im.getchannel("A").resize(size, Image.Resampling.BOX).point(lambda v: 255 if v > 120 else 0)
+                im = rgb.convert("RGBA"); im.putalpha(al)
+                bb2 = al.getbbox()
+                if bb2 is None:
+                    continue
             a = np.asarray(im)[..., 3] > 0
             ys, xs = np.nonzero(a)
-            items.append((f["file"][:-4], im, float(xs.mean()), im.height))
+            items.append((f["file"][:-4], im, float(xs.mean()), im.height, f["src"]))
     W, x, y, rowh, rects = 1024, 0, 0, 0, {}
-    for name, im, cx, h in sorted(items, key=lambda t: -t[1].height):
+    for name, im, cx, h, _ in sorted(items, key=lambda t: -t[1].height):
         if x + im.width > W:
             x, y, rowh = 0, y + rowh + 1, 0
         rects[name] = [x, y, im.width, im.height, round(cx), h]
         x += im.width + 1; rowh = max(rowh, im.height)
     atlas = Image.new("RGBA", (W, y + rowh), (0, 0, 0, 0))
-    for name, im, _, _ in items:
+    for name, im, _, _, _ in items:
         atlas.paste(im, tuple(rects[name][:2]))
-    dst = ROOT / "assets/sprites/gaby"
     # paleta indexada de 128 cores (como no hardware antigo): limpa o ruído do JPEG e deixa o arquivo leve
     alpha = np.asarray(atlas.getchannel("A")) > 0
     rgb = atlas.convert("RGB")

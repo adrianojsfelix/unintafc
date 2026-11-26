@@ -86,6 +86,23 @@
       noise(t, 0.7, 0.9, sfxBus, "lowpass", 1800, 120);
       tone("sine", 90, t, 0.5, 0.8, sfxBus, 30);
     },
+    whip() {
+      const t = ac.currentTime;
+      noise(t, 0.12, 0.3, sfxBus, "bandpass", 900, 4000, 2);
+      noise(t + 0.11, 0.05, 0.9, sfxBus, "highpass", 3000);   // estalo
+      tone("square", 1800, t + 0.11, 0.03, 0.2, sfxBus, 900);
+    },
+    energy() {
+      const t = ac.currentTime;
+      tone("sawtooth", 220, t, 0.4, 0.25, sfxBus, 880);
+      tone("square", 440, t, 0.35, 0.12, sfxBus, 1320);
+      noise(t, 0.3, 0.25, sfxBus, "bandpass", 3000, 1200, 4);
+    },
+    blip() { tone("square", 880, ac.currentTime, 0.05, 0.15, sfxBus); },
+    select() {
+      const t = ac.currentTime;
+      tone("square", 660, t, 0.08, 0.18, sfxBus); tone("square", 990, t + 0.07, 0.14, 0.18, sfxBus);
+    },
     meow() {
       const t = ac.currentTime;
       voice(t, 0.38, 700, 520, 0.55, [600, 1700, 3300]);
