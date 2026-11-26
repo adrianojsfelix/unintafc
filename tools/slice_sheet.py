@@ -14,8 +14,8 @@ SRC = ROOT / "assets/reference/gaby_sprites_raw.jpg"
 OUT = ROOT / "assets/sprites/gaby/frames"
 
 
-SPLIT = {(0, 7): [83], (6, 6): [83]}       # (linha, quadro): colunas de corte
-MERGE_PREV = {(9, 9)}                       # pedaço (cabeça) que se soltou do quadro anterior
+SPLIT = {}                                  # (linha, quadro): colunas de corte
+MERGE_PREV = set()                          # pedaço que se soltou do quadro anterior
 
 
 def masks(a):
@@ -182,7 +182,9 @@ def build_atlas():
     for row in meta:
         for f in row["frames"]:
             im = Image.open(OUT / f["file"])
-            bb = im.getbbox()
+            bb = im.getchannel("A").getbbox()
+            if bb is None:
+                continue  # quadro que ficou vazio (ex.: últimas faíscas da explosão)
             im = im.crop(bb)
             a = np.asarray(im)[..., 3] > 0
             ys, xs = np.nonzero(a)

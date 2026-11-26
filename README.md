@@ -11,7 +11,7 @@ Abra http://localhost:8000 (precisa de servidor por causa do carregamento do atl
 
 **Controles** — P1: A/D andar · W pular · S agachar · J bastão · K bola de fogo · L gato ·
 segurar para trás = defesa. P2: setas · Enter · `.` · `/` (qualquer tecla do P2 assume o lugar da CPU).
-`1` alterna CPU/boneco de treino, `H` mostra hitboxes, `R` reinicia o round.
+`1` alterna CPU/boneco de treino, `M` liga/desliga o som, `H` mostra hitboxes, `R` reinicia o round.
 
 ## Estrutura
 
@@ -22,6 +22,7 @@ segurar para trás = defesa. P2: setas · Enter · `.` · `/` (qualquer tecla do
 | `tools/slice_sheet.py` | Fatia a folha, remove o fundo e monta `atlas.png` + `atlas.json` |
 | `assets/sprites/gaby/atlas.*` | 150 quadros, paleta indexada de 128 cores, âncora nos pés |
 | `src/game.js` | Motor: animações, golpes, projéteis, hitbox/hurtbox, HUD, CPU |
+| `src/audio.js` | Música de combate original e efeitos (golpe, defesa, fogo, explosão, miado, dor, K.O.), sintetizados com Web Audio |
 
 Para regerar o atlas depois de trocar a folha: `python3 tools/slice_sheet.py` (requer Pillow, numpy, scipy).
 
@@ -37,7 +38,7 @@ Para regerar o atlas depois de trocar a folha: `python3 tools/slice_sheet.py` (r
 | 6 | 0 = defesa/agachar · 1–6 = pulo · 7–10 = bola de fogo |
 | 7 | 0–2 = lançar fogo · 3–5 = golpe de bastão · 7 = pose |
 | 8 | invocar e lançar o gato · 0–2 = vitória |
-| 9–10 | levar golpe, cair, deitada |
+| 9–10 | levar golpe, voar, rolar e ficar deitada |
 | 11–14 | K.O. queimada (quando o golpe final é a bola de fogo) |
 
 ## Etapas

@@ -28,13 +28,13 @@
     fire:    { flip: true, frames: [["r07_f06", 4], ["r07_f05", 4], ["r07_f00", 4, "spawn"], ["r07_f01", 5], ["r07_f02", 5], ["r07_f03", 6], ["r07_f04", 8]] },
     cat:     { frames: [...seq(8, 3, 8, 4), ["r08_f09", 6, "spawn"], ["r08_f10", 6], ["r08_f11", 8]] },
     hit:     { frames: [["r09_f00", 7], ["r09_f01", 12]] },
-    fall:    { frames: [...seq(9, 2, 9, 6), ["r10_f08", 8], ["r10_f09", 999]] },
+    fall:    { frames: [...seq(9, 2, 8, 6), ...seq(10, 0, 7, 5), ["r10_f08", 999]] },
     burn:    { frames: [...seq(11, 0, 7, 4), ...seq(12, 0, 3, 4), ...seq(13, 0, 7, 4), ...seq(14, 0, 7, 5), ["r14_f07", 999]] },
     win:     { frames: [["r08_f00", 8], ["r08_f01", 8], ["r08_f02", 999]] },
     // projéteis e efeitos
     fireball:{ flip: true, loop: true, frames: seq(6, 7, 10, 4) },
-    catrun:  { loop: true, frames: seq(5, 0, 7, 4) },
-    boom:    { frames: seq(3, 0, 11, 3) },
+    catrun:  { loop: true, frames: [["r05_f00", 5], ["r05_f02", 5], ["r05_f03", 5], ["r05_f05", 5], ["r05_f06", 5]] },
+    boom:    { frames: seq(3, 0, 9, 3) },
   };
 
   const GABY = {
@@ -108,6 +108,7 @@
   // ---------- Entrada ----------
   const keys = new Set(), pressed = new Set();
   addEventListener("keydown", e => {
+    Sound.unlock();                       // o navegador só libera áudio após uma tecla
     if (!keys.has(e.code)) pressed.add(e.code);
     keys.add(e.code);
     if (e.code.startsWith("Arrow") || e.code === "Space") e.preventDefault();
@@ -115,7 +116,7 @@
   addEventListener("keyup", e => keys.delete(e.code));
   document.querySelectorAll("#touch button").forEach(b => {
     const k = b.dataset.k;
-    b.addEventListener("pointerdown", e => { e.preventDefault(); if (!keys.has(k)) pressed.add(k); keys.add(k); });
+    b.addEventListener("pointerdown", e => { e.preventDefault(); Sound.unlock(); if (!keys.has(k)) pressed.add(k); keys.add(k); });
     ["pointerup", "pointercancel", "pointerleave"].forEach(ev => b.addEventListener(ev, () => keys.delete(k)));
   });
   const MAP = {
@@ -184,7 +185,7 @@
   // ---------- Lutador ----------
   class Fighter {
     constructor(def, pal, x, facing, label) {
-      this.def = def; this.pal = pal; this.label = label; this.spawnX = x; this.spawnFacing = facing;
+      this.def = def; this.pal = pal; this.label = label; this.voice = pal === "p2" ? 0.86 : 1; this.spawnX = x; this.spawnFacing = facing;
       this.reset();
     }
     reset() {
@@ -211,6 +212,7 @@
     startMove(name) {
       this.state = "attack"; this.move = this.def.moves[name]; this.hasHit = false; this.crouch = false;
       this.anim.set(this.move.anim);
+      if (name === "punch") Sound.play("whoosh");
     }
 
     update(input, foe, world) {
@@ -231,6 +233,7 @@
         if (f[2] === "spawn" && !this.anim.fired.has(this.anim.i) && this.move.proj) {
           this.anim.fired.add(this.anim.i);
           world.projectiles.push(new Projectile(this, this.move.proj));
+          Sound.play(this.move.proj.anim === "catrun" ? "meow" : "fire");
           this.cooldown = 70;
         }
         if (this.anim.done) { this.state = "idle"; this.move = null; }
@@ -272,6 +275,7 @@
       if (canBlock) {
         this.hp = Math.max(1, this.hp - (spec.chip ?? 2));
         this.state = "hit"; this.stun = spec.blockstun ?? 14; this.vx = dir * 2.4; this.play("guard");
+        Sound.play("block");
         return "block";
       }
       this.hp = Math.max(0, this.hp - spec.damage);
@@ -279,8 +283,10 @@
       if (this.hp === 0) {
         this.state = "ko"; this.vx = dir * 2.2;
         this.anim.set(spec.burn ? "burn" : "fall");
+        Sound.play("hit"); Sound.play("ko", this.voice);
       } else {
         this.state = "hit"; this.stun = spec.hitstun ?? 20; this.vx = dir * (spec.push ?? 3); this.anim.set("hit");
+        Sound.play("hit"); Sound.play("pain", this.voice);
       }
       return "hit";
     }
@@ -333,12 +339,14 @@
     world.projectiles = []; world.effects = [];
     Object.assign(match, { time: 99, frame: 0, over: false, hitstop: 0 });
     showBanner("FIGHT!", 70);
+    Sound.play("fight");
   }
   function showBanner(t, d) { match.banner = t; match.bannerT = d; }
   const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
   function step() {
     if (pressed.has("KeyH")) debug = !debug;
+    if (pressed.has("KeyM")) showBanner(Sound.toggleMute() ? "SOM OFF" : "SOM ON", 50);
     if (pressed.has("KeyR")) resetRound();
     if (pressed.has("Digit1")) { cpu.mode = cpu.mode === "ai" ? "dummy" : "ai"; p2Human = false; showBanner(cpu.mode === "ai" ? "CPU" : "TREINO", 50); }
     if (Object.values(MAP.p2).some(k => pressed.has(k))) p2Human = true;
@@ -370,11 +378,12 @@
         const res = foe.takeHit({ ...p.spec, hitstun: 26, push: 3.5 }, p.facing);
         match.hitstop = res === "hit" ? 8 : 4;
         world.effects.push(new Effect("boom", p.x, p.y + 10));
+        Sound.play("boom");
       }
     }
     // projéteis que se cruzam se anulam
     const [p1, p2] = [world.projectiles.find(p => p.owner === a), world.projectiles.find(p => p.owner === b)];
-    if (p1 && p2 && overlap(p1.box(), p2.box())) { p1.dead = p2.dead = true; world.effects.push(new Effect("boom", (p1.x + p2.x) / 2, p1.y)); }
+    if (p1 && p2 && overlap(p1.box(), p2.box())) { p1.dead = p2.dead = true; world.effects.push(new Effect("boom", (p1.x + p2.x) / 2, p1.y)); Sound.play("boom"); }
     world.projectiles = world.projectiles.filter(p => !p.dead);
     world.effects.forEach(e => e.update());
     world.effects = world.effects.filter(e => !e.dead);
@@ -387,7 +396,7 @@
         const winner = a.hp === b.hp ? null : a.hp > b.hp ? a : b;
         showBanner(a.hp === 0 || b.hp === 0 ? "K.O." : "TIME", 120);
         timers.push(setTimeout(() => {
-          if (winner) { winner.state = "win"; winner.anim.set("win"); }
+          if (winner) { winner.state = "win"; winner.anim.set("win"); Sound.play("win"); }
           showBanner(winner ? winner.label + " VENCE" : "EMPATE", 160);
         }, 1600));
         timers.push(setTimeout(resetRound, 5200));
@@ -431,6 +440,7 @@
     text(g, b.label + (p2Human ? "" : cpu.mode === "ai" ? " (CPU)" : " (TREINO)"), W - 12, 24, 9, "#fff", "right");
     text(g, String(match.time).padStart(2, "0"), W / 2, 8, 16, "#f3d23a", "center");
     if (match.bannerT > 0) text(g, match.banner, W / 2, 70, 28, "#ffe066", "center");
+    if (!Sound.ready) text(g, "aperte qualquer tecla para ligar o som", W / 2, H - 12, 8, "#ffe9a8", "center");
     if (debug) text(g, `P1 ${a.state}/${a.anim.frame[0]}  P2 ${b.state}/${b.anim.frame[0]}`, 6, H - 12, 8, "#9fe");
   }
   function render() {
