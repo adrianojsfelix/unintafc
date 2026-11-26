@@ -2,7 +2,7 @@
 
 Jogo de luta 2D no estilo dos fliperamas/SNES dos anos 90, com o elenco da UFS.
 
-**Elenco:** Gaby, Alicia de Morais, Adriano, Rogério e Barba.
+**Elenco:** Gaby, Adriano, Rogério, Barba, Angelo, Kaisson e Alicia de Moraes.
 
 ## Como rodar
 
@@ -16,20 +16,23 @@ P2: setas · Enter · `.` · `/` (qualquer tecla do P2 assume o lugar da CPU). `
 
 | Personagem | J | K | L |
 |---|---|---|---|
-| Gaby | bastão | bola de fogo | gato |
-| Alicia | chicotada curta | chicotada longa | rajada de fogo |
+| Gaby | chute alto | bola de fogo | gato |
 | Adriano | soco | chute alto | bola de energia |
 | Rogério | soco | sequência de 3 socos | esfera roxa |
-| Barba | soco | arco de fogo | soco de fogo |
+| Barba | soco | símbolo da IA (ChatGPT) | modo maluco sem camisa |
+| Angelo | soco | foto com flash | queixão |
+| Kaisson | soco | pão que atira | baguete de taco |
+| Alicia | chicotada curta | chicotada longa | voo sombrio (flutua parada) |
 `1` alterna CPU/boneco de treino, `M` liga/desliga o som, `H` mostra hitboxes, `R` reinicia o round.
 
 ## Estrutura
 
 | Caminho | O que é |
 |---|---|
-| `assets/reference/gaby_sprites_raw.jpg` | Folha de sprites original da Gaby (caixas magenta sobre verde) |
+| `assets/reference/<id>_sprites_raw.jpg` | Folha de sprites de cada personagem (fundo magenta, gerada no Gemini) · `*_v1.jpg` = folhas antigas |
 | `assets/reference/` | Folhas de modelo e elenco |
-| `tools/slice_sheet.py` | Fatia folhas com caixas magenta sobre verde (Gaby) e monta `atlas.png` + `atlas.json` |
+| `tools/slice_sheet.py` | Monta `atlas.png` + `atlas.json` (e fatiava a folha antiga da Gaby, com caixas) |
+| `tools/preview_frames.py` | Prancha com todos os quadros fatiados e seus nomes, para escolher os quadros de cada golpe |
 | `tools/slice_white.py` | Fatia folhas sobre fundo liso (branco, ou magenta/verde com `--bg`): faixas e nº de quadros por linha em `REGIONS` (detectados sozinhos se faltarem), escala automática para ~112 px |
 | `assets/reference/elenco/` | Recorte de cada pessoa do elenco, para anexar no Gemini como referência |
 | `docs/PROMPTS_GEMINI.md`, `docs/prompts_gemini.html` | Prompts prontos de cada personagem para copiar no Gemini (gerados por `tools/build_prompt_guide.py`) |
@@ -42,31 +45,19 @@ P2: setas · Enter · `.` · `/` (qualquer tecla do P2 assume o lugar da CPU). `
 Para regerar os atlas (requer Pillow, numpy, scipy):
 
 ```bash
-python3 tools/slice_sheet.py
-python3 tools/slice_white.py assets/reference/alicia_sprites_raw.jpg alicia
+for n in gaby barba angelo kaisson alicia; do python3 tools/slice_white.py assets/reference/${n}_sprites_raw.jpg $n --bg magenta; done
+python3 tools/slice_white.py assets/reference/adriano_sprites_raw.jpg adriano
+python3 tools/slice_white.py assets/reference/rogerio_sprites_raw.jpg rogerio
+python3 tools/preview_frames.py angelo   # confere os quadros: assets/sprites/angelo/frames/_preview.png
 ```
 
-**Novo personagem:** gere a folha seguindo [`docs/SPRITES_GEMINI.md`](docs/SPRITES_GEMINI.md), salve a folha em `assets/reference/<id>_sprites_raw.jpg`, adicione as faixas em
-`REGIONS` (`tools/slice_white.py`), rode o fatiador (`--bg magenta` se o fundo for magenta) e descreva animações e golpes em `src/characters.js`.
-
-## Linhas da folha da Gaby → animações
-
-| Linha | Uso no jogo |
-|---|---|
-| 0 | parada |
-| 1 | andar para frente |
-| 2, 4 | especiais com a bola vermelha (ainda não usados) |
-| 3 | explosão de impacto |
-| 5 | gato correndo (projétil do golpe L) |
-| 6 | 0 = defesa/agachar · 1–6 = pulo · 7–10 = bola de fogo |
-| 7 | 0–2 = lançar fogo · 3–5 = golpe de bastão · 7 = pose |
-| 8 | invocar e lançar o gato · 0–2 = vitória |
-| 9–10 | levar golpe, voar, rolar e ficar deitada |
-| 11–14 | K.O. queimada (quando o golpe final é a bola de fogo) |
+**Novo personagem:** gere a folha seguindo [`docs/PROMPTS_GEMINI.md`](docs/PROMPTS_GEMINI.md), salve em
+`assets/reference/<id>_sprites_raw.jpg`, rode o fatiador com `--bg magenta`, confira a prancha e descreva
+animações e golpes em `src/characters.js` (os quadros são `rLL_fQQ` = linha, quadro).
 
 ## Etapas
 
 1. **Gaby** ✅ jogável com os sprites próprios
-2. **Alicia, Adriano, Rogério e Barba** ✅ + tela de seleção · faltam Angelo e Kaisson (prompts em `docs/SPRITES_GEMINI.md`)
+2. **Elenco completo (7)** ✅ + tela de seleção · Gaby, Barba e Alicia com as folhas novas do Gemini
 3. Cenários (campus, laboratório, cantina…)
 4. Tela de título, seleção de personagem, som e música

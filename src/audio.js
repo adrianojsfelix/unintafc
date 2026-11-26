@@ -98,6 +98,17 @@
       tone("square", 440, t, 0.35, 0.12, sfxBus, 1320);
       noise(t, 0.3, 0.25, sfxBus, "bandpass", 3000, 1200, 4);
     },
+    shutter() {                                   // clique de câmera (foto do Angelo)
+      const t = ac.currentTime;
+      noise(t, 0.03, 0.7, sfxBus, "highpass", 4000);
+      noise(t + 0.06, 0.04, 0.6, sfxBus, "highpass", 3000);
+      tone("sine", 2400, t + 0.02, 0.12, 0.15, sfxBus, 1200);
+    },
+    crazy() {                                     // grito do Barba no modo maluco
+      const t = ac.currentTime;
+      tone("sawtooth", 140, t, 0.5, 0.3, sfxBus, 420);
+      noise(t, 0.4, 0.4, sfxBus, "bandpass", 600, 2600, 2);
+    },
     blip() { tone("square", 880, ac.currentTime, 0.05, 0.15, sfxBus); },
     select() {
       const t = ac.currentTime;

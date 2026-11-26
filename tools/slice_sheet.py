@@ -10,7 +10,7 @@ from PIL import Image
 from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "assets/reference/gaby_sprites_raw.jpg"
+SRC = ROOT / "assets/reference/gaby_sprites_v1.jpg"
 OUT = ROOT / "assets/sprites/gaby/frames"
 
 

@@ -29,22 +29,35 @@ ATTACH = 30        # distância máx. para anexar partícula solta a um quadro
 
 # Faixas (y0, y1, nº de quadros[, cortes x manuais]) de cada folha, lidas do layout.
 REGIONS = {
-    "alicia":  [(15, 199, 11), (209, 368, 7), (374, 537, 4), (538, 696, 4), (699, 826, 7), (827, 981, 11),
-                (984, 1104, 7), (1107, 1219, 9), (1227, 1320, 9), (1328, 1541, 5), (1551, 1702, 8),
-                (1702, 1852, 9), (1852, 2000, 7)],
     "adriano": [(43, 299, 7), (328, 555, 7), (577, 824, 4), (850, 1081, 5), (1107, 1336, 5, [192, 412, 695, 885]),
                 (1348, 1472, 5, [290, 560, 855, 1015]),
                 (1472, 1710, 5), (1713, 1984, 8)],
     "rogerio": [(41, 300, 8), (318, 572, 6), (588, 851, 8), (852, 1041, 10), (1057, 1325, 7), (1345, 1538, 8),
                 (1571, 1648, 5), (1649, 1826, 7), (1826, 2000, 8)],
-    "barba":   [(24, 335, 11, [122, 236, 350, 460, 570, 700, 885, 1030, 1175, 1320]), (335, 609, 10), (672, 953, 5),
-                (1013, 1238, 6, [225, 440, 630, 850, 1050]), (1247, 1520, 6), (1536, 1687, 8),
-                (1693, 1838, 9), (1838, 2000, 7)],
+    "angelo":  [(18, 168, 5), (185, 342, 7), (347, 523, 6), (522, 673, 2), (673, 827, 6), (829, 991, 6),
+                (1010, 1138, 4), (1156, 1315, 9), (1341, 1445, 2), (1444, 1613, 7), (1619, 1795, 3), (1800, 1994, 7)],
+    "kaisson": [(20, 156, 5), (171, 317, 7), (327, 478, 6), (486, 623, 2), (634, 789, 7), (804, 965, 7), (992, 1088, 6),
+                (1111, 1260, 6), (1272, 1422, 3), (1437, 1573, 6), (1586, 1769, 3), (1784, 1989, 7)],
+    "barba":   [(45, 264, 8), (274, 479, 9), (525, 730, 9), (771, 974, 8), (999, 1138, 12), (1159, 1340, 7),
+                (1380, 1536, 7), (1536, 1749, 3), (1756, 1989, 8)],
+    "alicia":  [(13, 227, 6), (249, 430, 8), (455, 625, 2), (625, 789, 3), (813, 984, 5), (1020, 1134, 3),
+                (1174, 1343, 4), (1363, 1535, 7), (1555, 1770, 2), (1770, 1990, 6)],
+    "gaby":    [(19, 201, 7), (214, 364, 6), (369, 529, 6), (542, 673, 2), (686, 844, 4), (862, 1026, 9), (1049, 1213, 5),
+                (1241, 1407, 6), (1428, 1589, 7), (1615, 1770, 2), (1794, 1986, 8)],
 }
 
 
+# Retângulos (x0, y0, x1, y1) apagados antes de fatiar: títulos que a IA escreveu na folha.
+ERASE = {
+    "kaisson": [(0, 0, 205, 2000)],
+    "alicia": [(225, 1766, 390, 1770)],    # separa a 2ª pose de vitória do fogo do K.O. logo abaixo
+    "barba": [(0, 0, 325, 36), (0, 272, 200, 306), (1262, 270, 1455, 306), (0, 484, 180, 518), (828, 484, 892, 518),
+              (0, 734, 282, 768), (0, 972, 292, 1006), (0, 1138, 342, 1172), (0, 1340, 242, 1376),
+              (0, 1536, 162, 1570), (0, 1750, 160, 1782)],
+}
+
 # linha usada como referência de altura (a pose de luta); padrão = linha 0
-SCALE_ROW = {"barba": 1}
+SCALE_ROW = {"angelo": 1, "kaisson": 1, "barba": 0, "alicia": 0, "gaby": 0}
 
 
 def best_cuts(occ, n, minw):
@@ -86,9 +99,9 @@ def chroma_bg(a, key):
     lab, _ = ndimage.label(bg)
     big = np.bincount(lab.ravel())
     big[0] = 0
-    bg = np.isin(lab, np.nonzero(big > 400)[0])   # ignora pontinhos isolados da cor dentro do desenho
-    for _ in range(2):
-        bg |= (score > 35) & ndimage.binary_dilation(bg)
+    bg = np.isin(lab, np.nonzero(big > 12)[0])   # ignora pontinhos isolados da cor dentro do desenho
+    # cresce para tons mais escuros da mesma cor ligados ao fundo (sombra roxa sob os pés, borda do JPEG)
+    bg = ndimage.binary_propagation(bg, mask=bg | (score > 35))
     return bg
 
 
@@ -105,6 +118,20 @@ def despill(a, bg, key):
         a[..., 1] = np.where(ring, g - excess, g)
 
 
+def frame_spans(band):
+    """Faixas horizontais [xa, xb] dos quadros de uma linha (pedaços sobrepostos = mesmo quadro)."""
+    lab, n = ndimage.label(ndimage.binary_dilation(band, iterations=3))
+    spans = sorted((sl[1].start, sl[1].stop) for k, sl in enumerate(ndimage.find_objects(lab), 1)
+                   if sl is not None and (band[sl] & (lab[sl] == k)).sum() >= BIG)
+    merged = []
+    for xa, xb in spans:
+        if merged and merged[-1][1] - xa > 0.4 * min(xb - xa, merged[-1][1] - merged[-1][0]):
+            merged[-1][1] = max(merged[-1][1], xb)
+        else:
+            merged.append([xa, xb])
+    return merged
+
+
 def auto_regions(fg, gap=3):
     """Faixas = blocos de linhas separados por >= gap linhas vazias; quadros = pedaços grandes."""
     rows = ndimage.binary_opening(fg, iterations=2).sum(axis=1) > 2
@@ -116,16 +143,7 @@ def auto_regions(fg, gap=3):
         y0 = y
         while y < H and (rows[y:y + gap].any()):
             y += 1
-        band = fg[y0:y]
-        lab, n = ndimage.label(ndimage.binary_dilation(band, iterations=3))
-        spans = sorted((sl[1].start, sl[1].stop) for k, sl in enumerate(ndimage.find_objects(lab), 1)
-                       if sl is not None and (band[sl] & (lab[sl] == k)).sum() >= BIG)
-        merged = []
-        for xa, xb in spans:                    # pedaços sobrepostos na horizontal = mesmo quadro
-            if merged and merged[-1][1] - xa > 0.4 * min(xb - xa, merged[-1][1] - merged[-1][0]):
-                merged[-1][1] = max(merged[-1][1], xb)
-            else:
-                merged.append([xa, xb])
+        merged = frame_spans(fg[y0:y])
         if merged and y - y0 > 30:
             regs.append((max(0, y0 - 2), min(H, y + 2), len(merged)))
     return regs
@@ -135,9 +153,11 @@ def main(src, name, key="white"):
     a = np.asarray(Image.open(src).convert("RGB")).astype(int)
     if key != "white":
         bg = chroma_bg(a, key)
+        for x0, y0, x1, y1 in ERASE.get(name, []):
+            bg[y0:y1, x0:x1] = True
         despill(a, bg, key)
         fg = ndimage.binary_opening(~bg, iterations=1)
-        return slice_fg(a, fg, name)
+        return slice_fg(a, fg, name, smart=True)
     r, g, b = a[..., 0], a[..., 1], a[..., 2]
     mn = np.minimum(np.minimum(r, g), b)
     # fundo: branco azulado (o miolo do fogo é branco amarelado, b bem menor que r)
@@ -167,7 +187,7 @@ def main(src, name, key="white"):
     return slice_fg(a, fg, name)
 
 
-def slice_fg(a, fg, name):
+def slice_fg(a, fg, name, smart=False):
     if name not in REGIONS:
         REGIONS[name] = auto_regions(fg)
         print("faixas detectadas (copie para REGIONS se quiser ajustar):")
@@ -194,6 +214,10 @@ def slice_fg(a, fg, name):
         band = mine[y0:y1]
         occ = band.sum(axis=0)
         lo, hi, cuts = best_cuts(occ, count, max(20, int((occ > 0).sum() / count * 0.6)))
+        spans = frame_spans(band) if smart else []
+        if len(spans) == count:                 # quadros bem separados: corta no meio de cada vão
+            cuts = [(spans[i][1] + spans[i + 1][0]) // 2 for i in range(count - 1)]
+            lo, hi = spans[0][0], spans[-1][1]
         if len(reg) > 3:
             cuts = reg[3]
         # cada pedaço conectado vai inteiro para o quadro do seu centro (o punho esticado

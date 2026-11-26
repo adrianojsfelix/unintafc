@@ -186,6 +186,7 @@
 
     update(input, foe, world) {
       if (this.flash) this.flash--;
+      this.t = (this.t || 0) + 1;
       if (this.cooldown) this.cooldown--;
       if (!this.airborne && !this.busy) this.facing = foe.x >= this.x ? 1 : -1;
       const back = this.facing > 0 ? input.left : input.right;
@@ -197,8 +198,9 @@
       } else if (this.state === "ko" || this.state === "win") {
         this.vx *= 0.9;
       } else if (this.state === "attack") {
-        if (!this.airborne) this.vx = 0;
         const fr = this.anim.frame;
+        // golpe que avança (ex.: voo da Alicia): anda nos quadros de ataque
+        if (!this.airborne) this.vx = this.move.dash && fr[2] && fr[2].startsWith("hit") ? this.move.dash * this.facing : 0;
         if (fr[2] === "spawn" && !this.anim.fired.has(this.anim.i) && this.move.proj) {
           this.anim.fired.add(this.anim.i);
           world.projectiles.push(new Projectile(this, this.move.proj));
@@ -264,7 +266,9 @@
       const sw = 24 - Math.min(10, (FLOOR - this.y) / 6);
       g.beginPath(); g.ellipse(Math.round(this.x), FLOOR + 1, sw, 3.5, 0, 0, Math.PI * 2); g.fill();
       const shake = this.state === "hit" && this.stun > 8 ? ((this.stun & 2) ? 1 : -1) : 0;
-      drawFrame(g, this.ch, sheet, this.anim.frame[0], this.x + shake, this.y, this.facing, this.anim.def.flip);
+      // quem flutua (Alicia) fica um pouco acima do chão, subindo e descendo devagar
+      const lift = this.ch.hover && ["idle", "walk", "back"].includes(this.state) ? this.ch.hover + Math.sin(this.t / 14) * 2 : 0;
+      drawFrame(g, this.ch, sheet, this.anim.frame[0], this.x + shake, this.y - lift, this.facing, this.anim.def.flip);
       if (debug) {
         const hb = this.hurtbox(); g.strokeStyle = "#3cf"; g.strokeRect(hb.x + 0.5, hb.y + 0.5, hb.w, hb.h);
         const ab = this.hitbox(); if (ab) { g.strokeStyle = "#f33"; g.strokeRect(ab.x + 0.5, ab.y + 0.5, ab.w, ab.h); }
@@ -438,7 +442,7 @@
     bgG.addColorStop(0, "#120e22"); bgG.addColorStop(1, "#2b1638");
     g.fillStyle = bgG; g.fillRect(0, 0, W, H);
     text(g, "ESCOLHA SEU LUTADOR", W / 2, 8, 14, "#ffe066", "center");
-    const n = ROSTER.length, slotW = 64, gap = 6, x0 = (W - (n * slotW + (n - 1) * gap)) / 2, y0 = 142;
+    const n = ROSTER.length, slotW = Math.min(64, Math.floor((W - 16 - (n - 1) * 4) / n)), gap = 4, x0 = (W - (n * slotW + (n - 1) * gap)) / 2, y0 = 142;
     // retratos grandes dos dois escolhidos
     const big = (idx, x, facing, label, color) => {
       const ch = CHARS[ROSTER[idx]];
