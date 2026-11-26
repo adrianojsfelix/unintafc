@@ -30,7 +30,9 @@ P2: setas · Enter · `.` · `/` (qualquer tecla do P2 assume o lugar da CPU). `
 | `assets/reference/gaby_sprites_raw.jpg` | Folha de sprites original da Gaby (caixas magenta sobre verde) |
 | `assets/reference/` | Folhas de modelo e elenco |
 | `tools/slice_sheet.py` | Fatia folhas com caixas magenta sobre verde (Gaby) e monta `atlas.png` + `atlas.json` |
-| `tools/slice_white.py` | Fatia folhas sobre fundo branco (Alicia, Adriano, Rogério, Barba): faixas e nº de quadros por linha em `REGIONS`, escala automática para ~112 px |
+| `tools/slice_white.py` | Fatia folhas sobre fundo liso (branco, ou magenta/verde com `--bg`): faixas e nº de quadros por linha em `REGIONS` (detectados sozinhos se faltarem), escala automática para ~112 px |
+| `assets/reference/elenco/` | Recorte de cada pessoa do elenco, para anexar no Gemini como referência |
+| `docs/SPRITES_GEMINI.md` | Como gerar folhas de sprites no Gemini: cor de fundo, prompts prontos de cada personagem |
 | `src/characters.js` | Animações e golpes de cada personagem |
 | `assets/sprites/<id>/atlas.*` | Quadros do personagem, paleta indexada de 128 cores, âncora nos pés |
 | `src/game.js` | Motor: animações, golpes, projéteis, hitbox/hurtbox, HUD, CPU |
@@ -43,8 +45,8 @@ python3 tools/slice_sheet.py
 python3 tools/slice_white.py assets/reference/alicia_sprites_raw.jpg alicia
 ```
 
-**Novo personagem:** salve a folha em `assets/reference/<id>_sprites_raw.jpg`, adicione as faixas em
-`REGIONS` (`tools/slice_white.py`), rode o fatiador e descreva animações e golpes em `src/characters.js`.
+**Novo personagem:** gere a folha seguindo [`docs/SPRITES_GEMINI.md`](docs/SPRITES_GEMINI.md), salve a folha em `assets/reference/<id>_sprites_raw.jpg`, adicione as faixas em
+`REGIONS` (`tools/slice_white.py`), rode o fatiador (`--bg magenta` se o fundo for magenta) e descreva animações e golpes em `src/characters.js`.
 
 ## Linhas da folha da Gaby → animações
 
@@ -64,6 +66,6 @@ python3 tools/slice_white.py assets/reference/alicia_sprites_raw.jpg alicia
 ## Etapas
 
 1. **Gaby** ✅ jogável com os sprites próprios
-2. **Alicia, Adriano, Rogério e Barba** ✅ + tela de seleção · falta 1 personagem do elenco
+2. **Alicia, Adriano, Rogério e Barba** ✅ + tela de seleção · faltam Angelo e Kaisson (prompts em `docs/SPRITES_GEMINI.md`)
 3. Cenários (campus, laboratório, cantina…)
 4. Tela de título, seleção de personagem, som e música

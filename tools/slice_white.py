@@ -1,10 +1,16 @@
-"""Fatia folhas de sprites desenhadas sobre fundo branco/claro, sem caixas (ex.: Alicia).
+"""Fatia folhas de sprites desenhadas sobre fundo liso, sem caixas (ex.: Alicia).
+
+Fundo: branco/claro (padrão) ou chroma key magenta (#FF00FF) / verde (#00FF00) com --bg.
 
 Cada personagem/efeito vira um quadro; partículas soltas (faíscas, brasas) são
 anexadas ao quadro grande mais próximo. Linhas = animações, ordenadas da esquerda p/ direita.
 
 Uso: python3 tools/slice_white.py assets/reference/alicia_sprites_raw.jpg alicia
+     python3 tools/slice_white.py assets/reference/angelo_sprites_raw.png angelo --bg magenta
+Se o personagem não estiver em REGIONS, as faixas e o nº de quadros são detectados sozinhos
+(e impressos, para você copiar para REGIONS e ajustar se algum quadro sair errado).
 """
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -69,8 +75,69 @@ def best_cuts(occ, n, minw):
     return lo, hi, sorted(lo + c for c in cuts)
 
 
-def main(src, name):
+def chroma_bg(a, key):
+    """Fundo magenta ou verde, incluindo a borda borrada pelo JPEG/antisserrilhado."""
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    if key == "magenta":
+        score = np.minimum(r, b) - g
+    else:
+        score = g - np.maximum(r, b)
+    bg = score > 90
+    lab, _ = ndimage.label(bg)
+    big = np.bincount(lab.ravel())
+    big[0] = 0
+    bg = np.isin(lab, np.nonzero(big > 400)[0])   # ignora pontinhos isolados da cor dentro do desenho
+    for _ in range(2):
+        bg |= (score > 35) & ndimage.binary_dilation(bg)
+    return bg
+
+
+def despill(a, bg, key):
+    """Tira o reflexo da cor do fundo que sobra no contorno do desenho."""
+    ring = ndimage.binary_dilation(bg, iterations=3) & ~bg
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    if key == "magenta":
+        excess = np.clip(np.minimum(r, b) - g, 0, None)
+        a[..., 0] = np.where(ring, r - excess // 2, r)
+        a[..., 2] = np.where(ring, b - excess // 2, b)
+    else:
+        excess = np.clip(g - np.maximum(r, b), 0, None)
+        a[..., 1] = np.where(ring, g - excess, g)
+
+
+def auto_regions(fg, gap=3):
+    """Faixas = blocos de linhas separados por >= gap linhas vazias; quadros = pedaços grandes."""
+    rows = ndimage.binary_opening(fg, iterations=2).sum(axis=1) > 2
+    regs, y, H = [], 0, len(rows)
+    while y < H:
+        if not rows[y]:
+            y += 1
+            continue
+        y0 = y
+        while y < H and (rows[y:y + gap].any()):
+            y += 1
+        band = fg[y0:y]
+        lab, n = ndimage.label(ndimage.binary_dilation(band, iterations=3))
+        spans = sorted((sl[1].start, sl[1].stop) for k, sl in enumerate(ndimage.find_objects(lab), 1)
+                       if sl is not None and (band[sl] & (lab[sl] == k)).sum() >= BIG)
+        merged = []
+        for xa, xb in spans:                    # pedaços sobrepostos na horizontal = mesmo quadro
+            if merged and merged[-1][1] - xa > 0.4 * min(xb - xa, merged[-1][1] - merged[-1][0]):
+                merged[-1][1] = max(merged[-1][1], xb)
+            else:
+                merged.append([xa, xb])
+        if merged and y - y0 > 30:
+            regs.append((max(0, y0 - 2), min(H, y + 2), len(merged)))
+    return regs
+
+
+def main(src, name, key="white"):
     a = np.asarray(Image.open(src).convert("RGB")).astype(int)
+    if key != "white":
+        bg = chroma_bg(a, key)
+        despill(a, bg, key)
+        fg = ndimage.binary_opening(~bg, iterations=1)
+        return slice_fg(a, fg, name)
     r, g, b = a[..., 0], a[..., 1], a[..., 2]
     mn = np.minimum(np.minimum(r, g), b)
     # fundo: branco azulado (o miolo do fogo é branco amarelado, b bem menor que r)
@@ -97,6 +164,14 @@ def main(src, name):
         if len(px) and (px[:, 0] - px[:, 2]).mean() > 60:
             bg[sl][hole] = False
     fg = ndimage.binary_opening(~bg, iterations=1)
+    return slice_fg(a, fg, name)
+
+
+def slice_fg(a, fg, name):
+    if name not in REGIONS:
+        REGIONS[name] = auto_regions(fg)
+        print("faixas detectadas (copie para REGIONS se quiser ajustar):")
+        print(f'    "{name}": {REGIONS[name]},')
     # cada pedaço pertence à faixa onde está o seu centro (punho erguido não invade a linha de cima)
     flab, fn_ = ndimage.label(fg)
     centers = ndimage.center_of_mass(fg, flab, range(1, fn_ + 1))
@@ -171,4 +246,9 @@ def main(src, name):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    ap = argparse.ArgumentParser()
+    ap.add_argument("src")
+    ap.add_argument("name")
+    ap.add_argument("--bg", choices=["white", "magenta", "green"], default="white")
+    args = ap.parse_args()
+    main(args.src, args.name, args.bg)
