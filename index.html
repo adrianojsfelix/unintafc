@@ -15,8 +15,8 @@
   .help { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.6; max-width: 1152px; }
   .help b { color: var(--fg); }
   .touch { display: none; width: 100%; max-width: 640px; justify-content: space-between; gap: 12px; user-select: none; }
-  .touch .pad, .touch .acts { display: flex; gap: 10px; }
-  .touch button { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #3a3150; background: #1b1626;
+  .touch .pad, .touch .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .touch button { width: 56px; height: 56px; border-radius: 50%; border: 2px solid #3a3150; background: #1b1626;
     color: var(--fg); font-size: 20px; font-weight: bold; touch-action: none; }
   .touch button.act { background: var(--accent); border-color: #ff5a64; }
   @media (pointer: coarse) { .touch { display: flex; } .help .kb { display: none; } }
@@ -30,11 +30,12 @@
   </div>
   <div class="acts">
     <button data-k="KeyS">▼</button><button class="act" data-k="KeyJ">P</button>
+    <button class="act" data-k="KeyK">🔥</button><button class="act" data-k="KeyL">🐈</button>
   </div>
 </div>
 <p class="help">
-  <span class="kb"><b>P1</b> A/D andar · W pular · S agachar · J soco · segurar <b>para trás</b> = defesa<br>
-  <b>P2</b> setas · Enter soco (aperte qualquer tecla do P2 para assumir a CPU)<br></span>
+  <span class="kb"><b>P1</b> A/D andar · W pular · S agachar · J bastão · K bola de fogo · L gato · segurar <b>para trás</b> = defesa<br>
+  <b>P2</b> setas · Enter bastão · . fogo · / gato (qualquer tecla do P2 assume o lugar da CPU)<br></span>
   <b>1</b> CPU ativa/boneco de treino · <b>H</b> mostrar hitboxes · <b>R</b> reiniciar round
 </p>
 <script src="src/game.js"></script>
