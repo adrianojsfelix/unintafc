@@ -182,14 +182,16 @@ def build_atlas(frames_dir=None, dst=None, scale=1.0):
     meta = json.loads((frames_dir / "frames.json").read_text())
     items = []
     for row in meta:
+        # escala única ou por linha ({linha: escala, None: padrão}), para igualar linhas desenhadas em tamanhos diferentes
+        s = scale.get(row["row"], scale[None]) if isinstance(scale, dict) else scale
         for f in row["frames"]:
             im = Image.open(frames_dir / f["file"])
             bb = im.getchannel("A").getbbox()
             if bb is None:
                 continue  # quadro que ficou vazio (ex.: últimas faíscas da explosão)
             im = im.crop(bb)
-            if scale != 1.0:
-                size = (max(1, round(im.width * scale)), max(1, round(im.height * scale)))
+            if s != 1.0:
+                size = (max(1, round(im.width * s)), max(1, round(im.height * s)))
                 rgb = im.convert("RGB").resize(size, Image.Resampling.BOX)
                 al = im.getchannel("A").resize(size, Image.Resampling.BOX).point(lambda v: 255 if v > 120 else 0)
                 im = rgb.convert("RGBA"); im.putalpha(al)

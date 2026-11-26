@@ -56,6 +56,17 @@ ERASE = {
               (0, 1536, 162, 1570), (0, 1750, 160, 1782)],
 }
 
+# A IA às vezes desenha uma linha da folha maior ou menor que as outras: aqui vai a altura (px na folha)
+# de uma pessoa em pé naquela linha. "ref" = altura em pé de referência; linhas fora da lista usam "ref".
+# Cada linha é escalada para a pessoa em pé ficar com 112 px no jogo.
+ROW_H = {
+    "gaby":    {"ref": 178, 1: 150, 2: 150, 3: 150, 4: 162, 5: 165, 6: 165, 7: 165, 8: 165, 9: 186, 10: 186},
+    "barba":   {"ref": 210, 1: 172, 5: 182, 6: 182},
+    "angelo":  {"ref": 152, 10: 172, 11: 185},
+    "kaisson": {"ref": 148, 3: 133, 10: 179, 11: 201},
+    "alicia":  {"ref": 210, 2: 190, 3: 190, 4: 190, 5: 190, 6: 190, 7: 190, 9: 217},
+}
+
 # linha usada como referência de altura (a pose de luta); padrão = linha 0
 SCALE_ROW = {"angelo": 1, "kaisson": 1, "barba": 0, "alicia": 0, "gaby": 0}
 
@@ -265,6 +276,9 @@ def slice_fg(a, fg, name, smart=False):
     # escala: a pose parada fica com ~112 px de altura, como a Gaby
     hs = sorted(f_["src"][3] for f_ in meta[SCALE_ROW.get(name, 0)]["frames"])
     scale = round(112 / hs[len(hs) // 2], 3)
+    if name in ROW_H:
+        rh = ROW_H[name]
+        scale = {None: round(112 / rh["ref"], 4), **{r: round(112 / h, 4) for r, h in rh.items() if r != "ref"}}
     print("escala", scale)
     build_atlas(out, ROOT / "assets/sprites" / name, scale)
 

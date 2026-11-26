@@ -67,7 +67,7 @@
         hit:   { frames: [[f(6, 0), 7], [f(6, 1), 12]] },
         fall:  { frames: [[f(6, 2), 10], [f(6, 3), 14], ...hold(6, 4)] },
         burn:  { frames: [...seq(7, 0, 6, 7), ...hold(7, 7)] },
-        win:   { frames: [[f(1, 6), 20], ...hold(4, 4)] },
+        win:   { frames: hold(4, 4) },
         orb:   { loop: true, frames: [[f(5, 0), 4], [f(5, 1), 4], [f(5, 3), 4]] },
         spark: { frames: [[f(5, 3), 3], [f(5, 4), 4], [f(5, 3), 3]] },
       },
