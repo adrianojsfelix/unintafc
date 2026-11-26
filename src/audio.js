@@ -1,9 +1,9 @@
-// Som do UFS Fighter — tudo sintetizado na hora com Web Audio (estilo chip de 16 bits).
-// Música de combate original, impactos, defesa, fogo, explosão, miado e voz de dor.
+// Som do UNINTA FIGHTERS — tudo sintetizado na hora com Web Audio (estilo chip de 16 bits).
+// Música do título e de combate (originais), golpes, pancadas com sangue, poderes, miado e voz de dor.
 // O navegador só libera áudio depois de uma tecla/toque: Sound.unlock() faz isso.
 (() => {
   "use strict";
-  let ac = null, master, musicBus, sfxBus, noiseBuf, muted = false, musicOn = false;
+  let ac = null, master, musicBus, sfxBus, noiseBuf, muted = false;
 
   function init() {
     if (ac) return;
@@ -119,8 +119,48 @@
       voice(t, 0.38, 700, 520, 0.55, [600, 1700, 3300]);
     },
     pain(pitch = 1) {
+      // "ah!", "uh!", "oh!" sorteados, com um gemido curto no fim às vezes
       const t = ac.currentTime, v = 0.85 + Math.random() * 0.3;
-      voice(t, 0.22 + Math.random() * 0.08, 440 * pitch * v, 300 * pitch * v, 0.7);
+      const vowels = [[800, 1150, 2900], [350, 600, 2400], [450, 800, 2830], [700, 1220, 2600]];
+      const vw = vowels[Math.random() * vowels.length | 0];
+      voice(t, 0.2 + Math.random() * 0.1, 470 * pitch * v, 290 * pitch * v, 0.85, vw);
+      if (Math.random() < 0.4) voice(t + 0.24, 0.16, 300 * pitch * v, 220 * pitch * v, 0.4, [350, 600, 2400]);
+    },
+    kickswing() { noise(ac.currentTime, 0.2, 0.45, sfxBus, "bandpass", 400, 2200, 2.5); },
+    punchhit() {                                  // soco: estalo seco + "splash" do sangue
+      const t = ac.currentTime;
+      tone("sine", 190, t, 0.12, 0.9, sfxBus, 55);
+      noise(t, 0.06, 0.9, sfxBus, "lowpass", 5000, 600);
+      noise(t + 0.03, 0.16, 0.35, sfxBus, "bandpass", 900, 300, 3);
+    },
+    kickhit() {                                   // chute: pancada mais grave e longa
+      const t = ac.currentTime;
+      tone("sine", 120, t, 0.22, 1, sfxBus, 38);
+      tone("square", 70, t, 0.08, 0.3, sfxBus, 45);
+      noise(t, 0.12, 0.9, sfxBus, "lowpass", 3000, 250);
+      noise(t + 0.04, 0.2, 0.35, sfxBus, "bandpass", 700, 250, 3);
+    },
+    boing() {                                     // queixão do Angelo crescendo
+      const t = ac.currentTime;
+      const o = tone("triangle", 140, t, 0.45, 0.5, sfxBus, 420);
+      const l = ac.createOscillator(), g = ac.createGain();
+      l.frequency.value = 18; g.gain.value = 40; l.connect(g); g.connect(o.frequency); l.start(t); l.stop(t + 0.5);
+    },
+    pop() {                                       // pão saindo do bolso feito tiro
+      const t = ac.currentTime;
+      noise(t, 0.05, 1, sfxBus, "highpass", 1500);
+      tone("sine", 600, t, 0.12, 0.5, sfxBus, 150);
+      noise(t + 0.04, 0.25, 0.3, sfxBus, "bandpass", 2500, 600, 2);
+    },
+    ai() {                                        // poder do ChatGPT: arpejo digital
+      const t = ac.currentTime;
+      [880, 1175, 1480, 1760, 2350].forEach((f, i) => tone("square", f, t + i * 0.035, 0.07, 0.14, sfxBus));
+      tone("sawtooth", 300, t, 0.4, 0.2, sfxBus, 1200);
+    },
+    dash() {                                      // voo sombrio da Alicia
+      const t = ac.currentTime;
+      tone("sawtooth", 90, t, 0.5, 0.35, sfxBus, 60);
+      noise(t, 0.5, 0.5, sfxBus, "bandpass", 300, 1800, 3);
     },
     ko(pitch = 1) {
       const t = ac.currentTime;
@@ -136,50 +176,80 @@
     },
   };
 
-  // ---------- música de combate (composição original, Lá menor, 152 bpm) ----------
-  const BPM = 152, STEP = 60 / BPM / 4;             // semicolcheia
+  // ---------- músicas (composições originais) ----------
   const N = n => 440 * Math.pow(2, (n - 69) / 12);  // número MIDI -> Hz
-  // progressão: Am – F – G – Em  (2 compassos cada no laço de 8 compassos)
-  const ROOTS = [45, 45, 41, 41, 43, 43, 40, 40];
-  const BASS = [0, 0, 12, 0, 0, 12, 0, 7, 0, 0, 12, 0, 10, 12, 7, 12];
-  // melodia: 8 compassos x 16 passos; null = pausa
-  const MEL = [
-    [69, null, 72, null, 76, null, 74, 72, 74, null, 72, 69, 71, null, 72, null],
-    [69, null, null, null, 64, null, 67, null, 69, null, 72, null, 71, 69, 67, null],
-    [65, null, 69, null, 72, null, 74, 72, 76, null, 74, 72, 74, null, 77, null],
-    [76, null, null, 74, 72, null, 69, null, 72, null, 74, null, 76, null, null, null],
-    [67, null, 71, null, 74, null, 79, 77, 76, null, 74, 72, 74, null, 71, null],
-    [74, null, null, 76, 77, null, 76, 74, 79, null, 77, null, 76, null, 74, null],
-    [76, null, 79, null, 83, null, 81, 79, 76, null, 79, null, 74, 76, 71, null],
-    [72, 74, 76, null, 79, null, 76, null, 81, null, null, 79, 76, null, null, null],
-  ];
-  let nextT = 0, step = 0, timer = null;
+  const _ = null;
+  const SONGS = {
+    // combate: Lá menor, 152 bpm, Am – F – G – Em
+    fight: {
+      bpm: 152, roots: [45, 45, 41, 41, 43, 43, 40, 40], minor: [45, 40],
+      bass: [0, 0, 12, 0, 0, 12, 0, 7, 0, 0, 12, 0, 10, 12, 7, 12],
+      mel: [
+        [69, _, 72, _, 76, _, 74, 72, 74, _, 72, 69, 71, _, 72, _],
+        [69, _, _, _, 64, _, 67, _, 69, _, 72, _, 71, 69, 67, _],
+        [65, _, 69, _, 72, _, 74, 72, 76, _, 74, 72, 74, _, 77, _],
+        [76, _, _, 74, 72, _, 69, _, 72, _, 74, _, 76, _, _, _],
+        [67, _, 71, _, 74, _, 79, 77, 76, _, 74, 72, 74, _, 71, _],
+        [74, _, _, 76, 77, _, 76, 74, 79, _, 77, _, 76, _, 74, _],
+        [76, _, 79, _, 83, _, 81, 79, 76, _, 79, _, 74, 76, 71, _],
+        [72, 74, 76, _, 79, _, 76, _, 81, _, _, 79, 76, _, _, _],
+      ],
+      drums(t, i, bar) {
+        if (i === 0 || i === 8 || i === 10) tone("sine", 140, t, 0.14, 0.9, musicBus, 40);      // bumbo
+        if (i === 4 || i === 12) noise(t, 0.13, 0.5, musicBus, "bandpass", 1800, 900, 0.8);     // caixa
+        if (i % 2 === 1) noise(t, 0.03, 0.12, musicBus, "highpass", 7000);                    // chimbal
+        if (bar === 7 && i >= 12) noise(t, 0.08, 0.35, musicBus, "bandpass", 1200 + i * 120, null, 1); // virada
+      },
+    },
+    // título: Ré maior, 168 bpm, D – A – Bm – G (hino animado de abertura)
+    title: {
+      bpm: 168, roots: [38, 45, 47, 43, 38, 45, 47, 43], minor: [47],
+      bass: [0, 12, 0, 12, 0, 12, 0, 12, 0, 12, 0, 12, 0, 12, 7, 12],
+      mel: [
+        [74, _, 74, _, 73, _, 74, _, 76, _, 74, _, 69, _, _, _],
+        [69, _, 71, _, 73, _, 76, _, 73, _, 71, _, 69, _, _, _],
+        [71, _, 74, _, 78, _, 76, 74, 76, _, 74, _, 71, _, 73, _],
+        [74, _, _, _, 71, _, 67, _, 69, _, 71, _, 73, _, _, _],
+        [78, _, 78, _, 76, _, 74, _, 76, _, 78, _, 81, _, 78, _],
+        [76, _, _, _, 73, _, 76, _, 81, _, _, _, 76, _, 73, _],
+        [74, _, 76, _, 78, _, 81, _, 83, _, 81, _, 78, _, 76, _],
+        [79, _, 78, _, 76, _, 74, _, 73, _, 76, _, 74, _, _, _],
+      ],
+      drums(t, i, bar) {
+        if (i % 4 === 0) tone("sine", 150, t, 0.12, 0.95, musicBus, 42);                       // bumbo a cada tempo
+        if (i === 4 || i === 12) { noise(t, 0.15, 0.55, musicBus, "bandpass", 2000, 900, 0.8); tone("triangle", 220, t, 0.06, 0.3, musicBus, 120); }
+        if (i % 4 === 2) noise(t, 0.08, 0.22, musicBus, "highpass", 6000);                    // chimbal aberto
+        else if (i % 2 === 1) noise(t, 0.02, 0.08, musicBus, "highpass", 8000);
+        if (bar % 4 === 3 && i >= 12) noise(t, 0.07, 0.4, musicBus, "bandpass", 900 + i * 150, null, 1);
+        if (i === 0 && bar % 4 === 0) noise(t, 0.6, 0.18, musicBus, "highpass", 5000, 9000);  // prato
+      },
+    },
+  };
+  let song = SONGS.fight, nextT = 0, step = 0, timer = null;
 
   function scheduleStep(t, s) {
-    const bar = Math.floor(s / 16) % 8, i = s % 16, root = ROOTS[bar];
+    const STEP = 60 / song.bpm / 4;
+    const bar = Math.floor(s / 16) % 8, i = s % 16, root = song.roots[bar];
     // baixo (triângulo)
-    if (i % 2 === 0 || BASS[i] === 12) tone("triangle", N(root + BASS[i]), t, STEP * 1.6, 0.55, musicBus);
+    if (i % 2 === 0 || song.bass[i] === 12) tone("triangle", N(root + song.bass[i]), t, STEP * 1.6, 0.55, musicBus);
     // melodia (quadrada, com eco)
-    const m = MEL[bar][i];
+    const m = song.mel[bar][i];
     if (m) {
       tone("square", N(m), t, STEP * 1.8, 0.16, musicBus);
       tone("square", N(m), t + STEP * 3, STEP * 1.2, 0.05, musicBus);
     }
     // acordes em arpejo bem baixinho
-    const triad = root === 45 || root === 40 ? [0, 3, 7] : [0, 4, 7];   // Am/Em menores, F/G maiores
+    const triad = song.minor.includes(root) ? [0, 3, 7] : [0, 4, 7];
     if (i % 4 === 2) triad.forEach((iv, k) => tone("square", N(root + 24 + iv), t + k * 0.02, STEP, 0.035, musicBus));
-    // bateria
-    if (i === 0 || i === 8 || i === 10) tone("sine", 140, t, 0.14, 0.9, musicBus, 40);      // bumbo
-    if (i === 4 || i === 12) noise(t, 0.13, 0.5, musicBus, "bandpass", 1800, 900, 0.8);     // caixa
-    if (i % 2 === 1) noise(t, 0.03, 0.12, musicBus, "highpass", 7000);                    // chimbal
-    if (bar === 7 && i >= 12) noise(t, 0.08, 0.35, musicBus, "bandpass", 1200 + i * 120, null, 1); // virada
+    song.drums(t, i, bar);
   }
   function scheduler() {
-    while (nextT < ac.currentTime + 0.12) { scheduleStep(nextT, step++); nextT += STEP; }
+    while (nextT < ac.currentTime + 0.12) { scheduleStep(nextT, step++); nextT += 60 / song.bpm / 4; }
   }
+  let wanted = "title";
   function startMusic() {
-    if (musicOn || !ac) return;
-    musicOn = true; step = 0; nextT = ac.currentTime + 0.05;
+    if (timer || !ac) return;
+    song = SONGS[wanted]; step = 0; nextT = ac.currentTime + 0.05;
     timer = setInterval(scheduler, 25);
   }
 
@@ -188,6 +258,13 @@
       init();
       if (ac.state === "suspended") ac.resume();
       startMusic();
+    },
+    // troca a música (título/luta); recomeça do início
+    music(name) {
+      if (wanted === name && timer) return;
+      wanted = name;
+      if (!ac) return;
+      song = SONGS[name]; step = 0; nextT = ac.currentTime + 0.08;
     },
     play(name, ...args) { if (ac && !muted && ac.state === "running") SFX[name](...args); },
     toggleMute() {

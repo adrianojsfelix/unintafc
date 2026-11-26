@@ -1,6 +1,8 @@
-# UFS Fighter
+# UNINTA FIGHTERS
 
-Jogo de luta 2D no estilo dos fliperamas/SNES dos anos 90, com o elenco da UFS.
+Jogo de luta 2D no estilo dos fliperamas/SNES dos anos 90, com o elenco do marketing da UNINTA.
+
+**Fluxo:** tela de título → escolha dos lutadores → escolha do cenário (sala de aula ou clínica de odontologia) → luta.
 
 **Elenco:** Gaby, Adriano, Rogério, Barba, Angelo, Kaisson e Alicia de Moraes.
 
@@ -40,7 +42,9 @@ P2: setas · Enter · `.` · `/` (qualquer tecla do P2 assume o lugar da CPU). `
 | `src/characters.js` | Animações e golpes de cada personagem |
 | `assets/sprites/<id>/atlas.*` | Quadros do personagem, paleta indexada de 128 cores, âncora nos pés |
 | `src/game.js` | Motor: animações, golpes, projéteis, hitbox/hurtbox, HUD, CPU |
-| `src/audio.js` | Música de combate original e efeitos (golpe, defesa, fogo, explosão, miado, dor, K.O.), sintetizados com Web Audio |
+| `src/audio.js` | Músicas originais do título e de combate + efeitos (soco e chute com sangue, poderes de cada um, defesa, dor, K.O.), sintetizados com Web Audio |
+| `assets/reference/stages/` | Cenários originais (sala de aula, clínica) |
+| `assets/stages/`, `assets/ui/logo.png` | Cenários já no tamanho da tela e logo endireitado, gerados por `tools/build_stages.py` |
 
 Para regerar os atlas (requer Pillow, numpy, scipy):
 
@@ -59,5 +63,5 @@ animações e golpes em `src/characters.js` (os quadros são `rLL_fQQ` = linha, 
 
 1. **Gaby** ✅ jogável com os sprites próprios
 2. **Elenco completo (7)** ✅ + tela de seleção · Gaby, Barba e Alicia com as folhas novas do Gemini
-3. Cenários (campus, laboratório, cantina…)
-4. Tela de título, seleção de personagem, som e música
+3. Cenários: sala de aula e clínica ✅
+4. Tela de título, música animada, sons dos golpes e sangue ✅

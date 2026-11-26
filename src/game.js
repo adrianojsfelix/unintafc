@@ -1,4 +1,4 @@
-// UFS Fighter — motor de luta 2D (canvas 384x224, laço fixo de 60 Hz).
+// UNINTA FIGHTERS — motor de luta 2D (canvas 384x224, laço fixo de 60 Hz).
 // Personagens e golpes ficam em src/characters.js; som em src/audio.js.
 (() => {
   "use strict";
@@ -7,6 +7,11 @@
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
+
+  // ---------- Cenários e logo ----------
+  const STAGES = [{ id: "sala", name: "SALA DE AULA" }, { id: "clinica", name: "CLINICA DE ODONTOLOGIA" }];
+  const UI = { stages: [], logo: null };
+  const BLOOD = ["#b3001b", "#7d0010", "#e02a3a"];
 
   // ---------- Carregamento dos atlas ----------
   const loadImage = src => new Promise((res, rej) => {
@@ -149,6 +154,30 @@
     draw(g) { drawFrame(g, this.ch, this.ch.sheets.p1, this.anim.frame[0], this.x, this.y, this.facing, this.anim.def.flip); }
   }
 
+  // faísca de impacto dos golpes corpo a corpo (os poderes usam a explosão do próprio personagem)
+  class Spark {
+    constructor(x, y, dir, big, blocked) {
+      this.x = x; this.y = y; this.dir = dir; this.t = 0; this.big = big; this.blocked = blocked;
+      this.rays = Array.from({ length: big ? 9 : 7 }, (_, i) => ({ a: (i / (big ? 9 : 7)) * Math.PI * 2 + Math.random() * 0.4, l: 0.6 + Math.random() * 0.6 }));
+    }
+    update() { this.t++; }
+    get dead() { return this.t > 10; }
+    draw(g) {
+      const k = this.t / 10, r = (this.big ? 20 : 14) * (0.4 + k);
+      g.save(); g.translate(Math.round(this.x), Math.round(this.y));
+      g.strokeStyle = this.blocked ? "#9fd8ff" : k < 0.5 ? "#fffbe0" : "#ffb02e"; g.lineWidth = 2;
+      g.globalAlpha = 1 - k * 0.8;
+      g.beginPath();
+      for (const ray of this.rays) {
+        const r0 = r * 0.35, r1 = r * ray.l * 1.3;
+        g.moveTo(Math.cos(ray.a) * r0, Math.sin(ray.a) * r0); g.lineTo(Math.cos(ray.a) * r1, Math.sin(ray.a) * r1);
+      }
+      g.stroke();
+      if (this.t < 4) { g.fillStyle = "#fff"; g.beginPath(); g.arc(0, 0, r * 0.35, 0, Math.PI * 2); g.fill(); }
+      g.restore();
+    }
+  }
+
   // ---------- Lutador ----------
   class Fighter {
     constructor(ch, pal, x, facing) {
@@ -248,7 +277,7 @@
       }
       this.hp = Math.max(0, this.hp - spec.damage);
       this.blocking = false; this.crouch = false; this.flash = 4; this.move = null;
-      Sound.play("hit");
+      Sound.play(spec.hitSfx || "hit");
       if (this.hp === 0) {
         this.state = "ko"; this.vx = dir * 2.2;
         this.anim.set(spec.burn ? "burn" : "fall");
@@ -299,11 +328,12 @@
   }
 
   // ---------- Cenas ----------
-  let scene = "select", debug = false, p2Human = false, fighters = [];
-  const world = { projectiles: [], effects: [] };
+  let scene = "title", debug = false, p2Human = false, fighters = [];
+  const world = { projectiles: [], effects: [], blood: [] };
   const match = { time: 99, frame: 0, banner: "", bannerT: 0, over: false, hitstop: 0 };
   const timers = [];
-  const sel = { p1: 0, p2: 1, stage: "p1", t: 0 };
+  const sel = { p1: 0, p2: 1, stage: "p1", map: 0, t: 0 };
+  let titleT = 0;
 
   function showBanner(t, d) { match.banner = t; match.bannerT = d; }
   const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -312,12 +342,13 @@
     const c1 = CHARS[ROSTER[sel.p1]], c2 = CHARS[ROSTER[sel.p2]];
     fighters = [new Fighter(c1, "p1", 120, 1), new Fighter(c2, c1 === c2 ? "p2" : "p1", 264, -1)];
     scene = "fight";
+    Sound.music("fight");
     resetRound();
   }
   function resetRound() {
     timers.splice(0).forEach(clearTimeout);
     fighters.forEach(f => f.reset());
-    world.projectiles = []; world.effects = [];
+    world.projectiles = []; world.effects = []; world.blood = [];
     Object.assign(match, { time: 99, frame: 0, over: false, hitstop: 0 });
     showBanner("FIGHT!", 70);
     Sound.play("fight");
@@ -325,6 +356,41 @@
   function toSelect() {
     timers.splice(0).forEach(clearTimeout);
     scene = "select"; sel.stage = "p1";
+    Sound.music("title");
+  }
+
+  function stepTitle() {
+    titleT++;
+    if (titleT > 20 && ["KeyJ", "Enter", "Space", "NumpadEnter"].some(k => pressed.has(k))) {
+      Sound.play("select"); scene = "select"; sel.stage = "p1";
+    }
+  }
+
+  // sangue: gotas que voam no sentido do golpe e mancham o chão por alguns segundos
+  function spawnBlood(x, y, dir, dmg) {
+    const n = 10 + Math.round(dmg * 1.6);
+    for (let i = 0; i < n; i++) world.blood.push({
+      x, y, vx: dir * (0.5 + Math.random() * 3) + (Math.random() - 0.5) * 1.2, vy: -1.2 - Math.random() * 2.8,
+      s: Math.random() < 0.35 ? 3 : 2, c: BLOOD[Math.random() * BLOOD.length | 0], stuck: false, life: 0,
+    });
+    if (world.blood.length > 500) world.blood.splice(0, world.blood.length - 500);
+  }
+  function updateBlood() {
+    for (const d of world.blood) {
+      d.life++;
+      if (d.stuck) continue;
+      d.vy += 0.2; d.x += d.vx; d.y += d.vy;
+      if (d.y >= FLOOR - 2 && d.vy > 0) { d.stuck = true; d.y = FLOOR - 1 + Math.random() * 9; d.life = 0; d.s += 1; }
+    }
+    world.blood = world.blood.filter(d => !d.stuck || d.life < 260);
+  }
+  function drawBlood(g) {
+    for (const d of world.blood) {
+      g.globalAlpha = d.stuck ? Math.max(0, Math.min(1, (260 - d.life) / 80)) * 0.85 : 1;
+      g.fillStyle = d.c;
+      g.fillRect(Math.round(d.x), Math.round(d.y), d.stuck ? d.s + 1 : d.s, d.s);
+    }
+    g.globalAlpha = 1;
   }
 
   function stepSelect() {
@@ -336,13 +402,19 @@
       if (pressed.has(MAP.p1.left)) move("p1", -1);
       if (pressed.has(MAP.p1.right)) move("p1", 1);
       if (pressed.has(MAP.p1.a)) { sel.stage = "p2"; Sound.play("select"); }
+      if (pressed.has("Escape")) { scene = "title"; titleT = 0; }
     } else if (sel.stage === "p2") {
       // sem segundo jogador, o P1 escolhe o adversário da CPU
       const m = p2Human ? MAP.p2 : MAP.p1;
       if (pressed.has(m.left)) move("p2", -1);
       if (pressed.has(m.right)) move("p2", 1);
-      if (pressed.has(m.a)) { Sound.play("select"); startFight(); }
+      if (pressed.has(m.a)) { Sound.play("select"); sel.stage = "map"; }
       if (pressed.has("Escape") || pressed.has("Backspace")) sel.stage = "p1";
+    } else if (sel.stage === "map") {
+      const m = p2Human ? MAP.p2 : MAP.p1;
+      if ([MAP.p1.left, MAP.p1.right, m.left, m.right].some(k => pressed.has(k))) { sel.map = (sel.map + 1) % STAGES.length; Sound.play("blip"); }
+      if (pressed.has(MAP.p1.a) || pressed.has(m.a)) { Sound.play("select"); startFight(); }
+      if (pressed.has("Escape") || pressed.has("Backspace")) sel.stage = "p2";
     }
   }
 
@@ -367,9 +439,11 @@
       const hb = att.hitbox();
       if (hb && def.state !== "ko" && overlap(hb, def.hurtbox())) {
         att.hits.add(hb.tag);
-        const res = def.takeHit(att.move, att.facing);
+        const spec = { ...att.move, hitSfx: att.move.hitSfx || (att.move.anim.includes("kick") ? "kickhit" : "punchhit") };
+        const res = def.takeHit(spec, att.facing);
+        if (res === "hit") spawnBlood(hb.x + hb.w / 2, hb.y + hb.h / 2, att.facing, spec.damage);
         match.hitstop = res === "hit" ? 7 : 4;
-        world.effects.push(new Effect(att.ch, att.ch.impact, hb.x + hb.w / 2 + att.facing * 4, hb.y + hb.h + 24, att.facing));
+        world.effects.push(new Spark(hb.x + hb.w / 2 + att.facing * 4, hb.y + hb.h / 2, att.facing, spec.damage >= 11, res !== "hit"));
       }
     }
     for (const p of world.projectiles) {
@@ -391,6 +465,7 @@
     }
     world.projectiles = world.projectiles.filter(p => !p.dead);
     world.effects.forEach(e => e.update());
+    updateBlood();
     world.effects = world.effects.filter(e => !e.dead);
     if (match.bannerT > 0) match.bannerT--;
 
@@ -411,30 +486,85 @@
 
   function step() {
     if (pressed.has("KeyM")) showBanner(Sound.toggleMute() ? "SOM OFF" : "SOM ON", 50);
-    if (scene === "select") stepSelect(); else stepFight();
+    if (scene === "title") stepTitle(); else if (scene === "select") stepSelect(); else stepFight();
     if (scene === "select" && match.bannerT > 0) match.bannerT--;
     pressed.clear();
   }
 
   // ---------- Desenho ----------
   function drawStage(g) {
-    // cenário provisório — os cenários definitivos são a próxima etapa
-    const sky = g.createLinearGradient(0, 0, 0, FLOOR);
-    sky.addColorStop(0, "#1a1440"); sky.addColorStop(0.6, "#5b2a5e"); sky.addColorStop(1, "#c0566a");
-    g.fillStyle = sky; g.fillRect(0, 0, W, FLOOR);
-    g.fillStyle = "#2a1d3a";
-    for (let i = 0; i < 12; i++) { const bx = i * 34 - 6, bh = 40 + ((i * 37) % 50); g.fillRect(bx, FLOOR - 40 - bh, 30, bh + 40); }
-    g.fillStyle = "#f2c96b";
-    for (let i = 0; i < 12; i++) for (let j = 0; j < 4; j++) if ((i * 7 + j * 3) % 5 < 2) g.fillRect(i * 34 + j * 6, FLOOR - 70 + j * 9 - (i % 3) * 8, 3, 4);
-    g.fillStyle = "#3d3350"; g.fillRect(0, FLOOR, W, H - FLOOR);
-    g.fillStyle = "#4b405f"; for (let x = 0; x < W; x += 32) g.fillRect(x, FLOOR, 16, H - FLOOR);
-    g.fillStyle = "#6a5c80"; g.fillRect(0, FLOOR, W, 1);
+    const img = UI.stages[sel.map];
+    if (img) { g.drawImage(img, 0, 0); return; }
+    g.fillStyle = "#2a1d3a"; g.fillRect(0, 0, W, H);
   }
   function text(g, s, x, y, size, color, align = "left") {
     g.font = `bold ${size}px ui-monospace, Menlo, Consolas, monospace`;
     g.textAlign = align; g.textBaseline = "top";
     g.fillStyle = "#000"; g.fillText(s, x + 1, y + 1);
     g.fillStyle = color; g.fillText(s, x, y);
+  }
+
+  function drawTitle(g) {
+    const t = titleT;
+    g.drawImage(UI.stages[1] || UI.stages[0], 0, 0);
+    const shade = g.createLinearGradient(0, 0, 0, H);
+    shade.addColorStop(0, "rgba(8,6,28,0.55)"); shade.addColorStop(0.55, "rgba(8,6,28,0.72)"); shade.addColorStop(1, "rgba(8,6,28,0.9)");
+    g.fillStyle = shade; g.fillRect(0, 0, W, H);
+    // elenco desfilando embaixo
+    ROSTER.forEach((id, i) => {
+      const ch = CHARS[id], fr = ch.anims.idle.frames[Math.floor((t + i * 7) / 9) % ch.anims.idle.frames.length][0];
+      const x = 30 + i * ((W - 60) / (ROSTER.length - 1));
+      g.fillStyle = "rgba(0,0,0,0.45)"; g.beginPath(); g.ellipse(x, 214, 14, 3, 0, 0, Math.PI * 2); g.fill();
+      drawFrame(g, ch, ch.sheets.p1, fr, x, 214, i < ROSTER.length / 2 ? 1 : -1, ch.anims.idle.flip, 0.6);
+    });
+    // placa com o logo
+    if (UI.logo) {
+      const lw = 150, lh = Math.round(UI.logo.height * lw / UI.logo.width), lx = (W - lw) / 2, ly = 12;
+      g.fillStyle = "#000"; g.fillRect(lx - 7, ly - 5, lw + 16, lh + 12);
+      g.fillStyle = "#fbfaf7"; g.fillRect(lx - 8, ly - 6, lw + 16, lh + 12);
+      g.fillStyle = "#c8202f"; g.fillRect(lx - 8, ly + lh + 4, lw + 16, 2);
+      g.imageSmoothingEnabled = true; g.drawImage(UI.logo, lx, ly, lw, lh); g.imageSmoothingEnabled = false;
+    }
+    // nome do jogo: entra com zoom e fica pulsando de leve
+    const zoom = t < 18 ? 1 + (18 - t) / 10 : 1 + Math.sin(t / 20) * 0.015;
+    g.save(); g.translate(W / 2, 96); g.scale(zoom, zoom);
+    g.font = "900 34px Impact, 'Arial Black', 'Helvetica Neue', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.lineJoin = "round";
+    g.lineWidth = 8; g.strokeStyle = "#1a0306"; g.strokeText("UNINTA", 0, -16);
+    g.lineWidth = 4; g.strokeStyle = "#c8202f"; g.strokeText("UNINTA", 0, -16);
+    const gold = g.createLinearGradient(0, -34, 0, 2);
+    gold.addColorStop(0, "#fffbe0"); gold.addColorStop(0.5, "#ffd23a"); gold.addColorStop(1, "#e8641a");
+    g.fillStyle = gold; g.fillText("UNINTA", 0, -16);
+    g.font = "900 30px Impact, 'Arial Black', 'Helvetica Neue', sans-serif";
+    g.lineWidth = 8; g.strokeStyle = "#1a0306"; g.strokeText("FIGHTERS", 0, 16);
+    g.lineWidth = 4; g.strokeStyle = "#ffd23a"; g.strokeText("FIGHTERS", 0, 16);
+    const red = g.createLinearGradient(0, 0, 0, 32);
+    red.addColorStop(0, "#ff6a5a"); red.addColorStop(1, "#a8101e");
+    g.fillStyle = red; g.fillText("FIGHTERS", 0, 16);
+    g.restore();
+    // brilho passando pelo nome
+    const sx = ((t * 4) % 700) - 150;
+    g.save(); g.globalCompositeOperation = "lighter"; g.globalAlpha = 0.25;
+    g.fillStyle = "#fff"; g.beginPath(); g.moveTo(sx, 66); g.lineTo(sx + 14, 66); g.lineTo(sx - 6, 128); g.lineTo(sx - 20, 128); g.fill();
+    g.restore();
+    if (t > 20 && (t >> 4) & 1) text(g, "APERTE  J  OU  ENTER", W / 2, 134, 10, "#fff", "center");
+  }
+
+  function drawMapSelect(g) {
+    g.fillStyle = "rgba(6,4,18,0.88)"; g.fillRect(0, 0, W, H);
+    text(g, "ESCOLHA O CENARIO", W / 2, 18, 14, "#ffe066", "center");
+    const tw = 168, th = Math.round(tw * H / W), gap = 16, x0 = (W - (tw * 2 + gap)) / 2, y0 = 56;
+    STAGES.forEach((st, i) => {
+      const x = x0 + i * (tw + gap), on = i === sel.map;
+      g.imageSmoothingEnabled = true;
+      if (UI.stages[i]) g.drawImage(UI.stages[i], x, y0, tw, th);
+      g.imageSmoothingEnabled = false;
+      if (!on) { g.fillStyle = "rgba(0,0,0,0.5)"; g.fillRect(x, y0, tw, th); }
+      g.strokeStyle = on ? (((sel.t >> 3) & 1) ? "#ffe066" : "#ff4a4a") : "#3a3150"; g.lineWidth = on ? 3 : 1;
+      g.strokeRect(x - 1, y0 - 1, tw + 2, th + 2); g.lineWidth = 1;
+      text(g, st.name, x + tw / 2, y0 + th + 8, 8, on ? "#fff" : "#8d86a3", "center");
+    });
+    text(g, "A/D troca · J confirma · Esc volta", W / 2, 200, 8, "#cfc6e8", "center");
   }
 
   function drawSelect(g) {
@@ -491,11 +621,13 @@
   }
 
   function render() {
-    if (scene === "select") { drawSelect(ctx); if (match.bannerT > 0) text(ctx, match.banner, W / 2, 90, 20, "#ffe066", "center"); return; }
+    if (scene === "title") { drawTitle(ctx); return; }
+    if (scene === "select") { drawSelect(ctx); if (sel.stage === "map") drawMapSelect(ctx); return; }
     drawStage(ctx);
     const order = [...fighters].sort((p, q) => (p.state === "attack") - (q.state === "attack"));
     order.forEach(f => f.draw(ctx, debug));
     world.projectiles.forEach(p => p.draw(ctx));
+    drawBlood(ctx);
     world.effects.forEach(e => e.draw(ctx));
     drawHud(ctx);
   }
@@ -509,12 +641,16 @@
   }
 
   ctx.fillStyle = "#fff"; ctx.font = "10px monospace"; ctx.fillText("carregando...", 8, 20);
-  Promise.all(ROSTER.map(loadChar)).then(() => requestAnimationFrame(loop)).catch(err => {
+  const loadUi = () => Promise.all([
+    ...STAGES.map((st, i) => loadImage(`assets/stages/${st.id}.png`).then(im => { UI.stages[i] = im; })),
+    loadImage("assets/ui/logo.png").then(im => { UI.logo = im; }),
+  ]);
+  Promise.all([...ROSTER.map(loadChar), loadUi()]).then(() => requestAnimationFrame(loop)).catch(err => {
     ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "#fff"; ctx.font = "10px monospace";
     ctx.fillText(err.message + " (abra via servidor http)", 8, 20);
   });
 
   // ganchos de teste (usados pelos testes automáticos)
-  window.__ufs = { sel, get fighters() { return fighters; }, get scene() { return scene; }, startFight, cpu };
+  window.__ufs = { sel, get fighters() { return fighters; }, get scene() { return scene; }, set scene(v) { scene = v; }, startFight, cpu, world };
 })();

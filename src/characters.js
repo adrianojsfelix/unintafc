@@ -1,4 +1,4 @@
-// Elenco do UFC Uninta Marketing: animações e golpes de cada personagem.
+// Elenco do UNINTA FIGHTERS: animações e golpes de cada personagem.
 // Quadros: "rLL_fQQ" = linha LL, quadro QQ da folha de sprites do personagem
 // (veja assets/sprites/<id>/frames e as tabelas no README).
 //
@@ -7,6 +7,7 @@
 //   marca "hit2"  = novo acerto dentro do mesmo golpe (sequências)
 //   marca "spawn" = solta o projétil do golpe
 // flip: o desenho original olha para a esquerda e precisa ser espelhado.
+// hitSfx: som ao acertar (padrão: "kickhit" em chutes, "punchhit" no resto). Golpes corpo a corpo tiram sangue.
 // dash: o golpe avança o lutador (velocidade em px/tick). hover: flutua (px acima do chão) parado/andando.
 // Botões: a = J, b = K, c = L (P2: Enter, ponto, barra).
 (() => {
@@ -44,7 +45,7 @@
       },
       buttons: { a: "kick", b: "fire", c: "cat" },
       moves: {
-        kick:  { anim: "kick", damage: 8, hitstun: 18, blockstun: 12, push: 3.2, chip: 1, sfx: "whoosh" },
+        kick:  { anim: "kick", damage: 8, hitstun: 18, blockstun: 12, push: 3.2, chip: 1, sfx: "kickswing" },
         fire:  { anim: "fire", proj: { anim: "fireball", speed: 3.4, damage: 12, y: -50, burn: true, sfx: "fire" } },
         cat:   { anim: "cat", proj: { anim: "catrun", speed: 2.6, damage: 10, y: 0, sfx: "meow" } },
       },
@@ -73,7 +74,7 @@
       buttons: { a: "punch", b: "kick", c: "blast" },
       moves: {
         punch: { anim: "punch", damage: 7, hitstun: 18, blockstun: 12, push: 3, chip: 1, sfx: "whoosh" },
-        kick:  { anim: "kick", damage: 10, hitstun: 22, blockstun: 14, push: 4, chip: 1, sfx: "whoosh" },
+        kick:  { anim: "kick", damage: 10, hitstun: 22, blockstun: 14, push: 4, chip: 1, sfx: "kickswing" },
         blast: { anim: "blast", proj: { anim: "orb", speed: 3.6, damage: 12, y: -56, sfx: "energy", boom: "spark" } },
       },
       impact: "spark",
@@ -132,7 +133,7 @@
       buttons: { a: "punch", b: "beam", c: "crazy" },
       moves: {
         punch: { anim: "punch", damage: 8, hitstun: 18, blockstun: 12, push: 3.4, chip: 1, sfx: "whoosh" },
-        beam:  { anim: "beam", proj: { anim: "aiorb", speed: 3.2, damage: 12, y: -43, sfx: "energy", boom: "aiboom" } },
+        beam:  { anim: "beam", proj: { anim: "aiorb", speed: 3.2, damage: 12, y: -43, sfx: "ai", boom: "aiboom" } },
         crazy: { anim: "crazy", damage: 6, hitstun: 16, blockstun: 10, push: 1.4, chip: 1, sfx: "crazy" },
       },
       impact: "aiboom",
@@ -164,7 +165,7 @@
       moves: {
         punch: { anim: "punch", damage: 7, hitstun: 18, blockstun: 12, push: 3, chip: 1, sfx: "whoosh" },
         photo: { anim: "photo", proj: { anim: "flash", speed: 4.2, damage: 11, y: -42, sfx: "shutter", boom: "flashboom" } },
-        chin:  { anim: "chin", damage: 15, hitstun: 26, blockstun: 16, push: 5, chip: 2, sfx: "whoosh" },
+        chin:  { anim: "chin", damage: 15, hitstun: 26, blockstun: 16, push: 5, chip: 2, sfx: "boing", hitSfx: "kickhit" },
       },
       impact: "flashboom",
     },
@@ -193,8 +194,8 @@
       buttons: { a: "punch", b: "bread", c: "bat" },
       moves: {
         punch: { anim: "punch", damage: 7, hitstun: 18, blockstun: 12, push: 3, chip: 1, sfx: "whoosh" },
-        bread: { anim: "bread", proj: { anim: "loaf", speed: 4.6, damage: 10, y: -54, sfx: "whoosh", boom: "crumbs" } },
-        bat:   { anim: "bat", damage: 13, hitstun: 24, blockstun: 14, push: 4.5, chip: 2, sfx: "whoosh" },
+        bread: { anim: "bread", proj: { anim: "loaf", speed: 4.6, damage: 10, y: -54, sfx: "pop", boom: "crumbs" } },
+        bat:   { anim: "bat", damage: 13, hitstun: 24, blockstun: 14, push: 4.5, chip: 2, sfx: "whoosh", hitSfx: "kickhit" },
       },
       impact: "crumbs",
     },
@@ -224,7 +225,7 @@
       moves: {
         punch: { anim: "punch", damage: 6, hitstun: 16, blockstun: 10, push: 2.6, chip: 1, sfx: "whip" },
         whip:  { anim: "whip", damage: 11, hitstun: 22, blockstun: 14, push: 4, chip: 2, sfx: "whip" },
-        dash:  { anim: "dash", damage: 13, hitstun: 26, blockstun: 14, push: 5, chip: 2, sfx: "energy", dash: 3.6 },
+        dash:  { anim: "dash", damage: 13, hitstun: 26, blockstun: 14, push: 5, chip: 2, sfx: "dash", dash: 3.6, hitSfx: "kickhit" },
       },
       impact: "boom",
     },
