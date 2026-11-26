@@ -1,0 +1,129 @@
+<title>Prompts de Sprites</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: arcade select-screen header, then one card per fighter (reference + copyable prompt). Deliberately single dark theme. */
+:root {
+  --bg: #11132a; --panel: #1b1e3c; --panel-2: #23274d; --line: #343a6b;
+  --fg: #ecebf5; --muted: #a3a6cc; --accent: #d8263a; --gold: #f5c542; --ok: #5fd38d;
+  --f-display: "Press Start 2P", ui-monospace, monospace;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+header.hero { margin-top: calc(-1 * env(safe-area-inset-top, 0px)); padding-top: calc(env(safe-area-inset-top, 0px) + 40px); padding-bottom: 28px;
+  background: linear-gradient(180deg, #1d1440 0%, var(--bg) 100%); border-bottom: 4px solid var(--accent); }
+.hero .wrap { padding-block: 0; }
+.eyebrow { font-family: var(--f-display); font-size: 10px; letter-spacing: .12em; color: var(--gold); text-transform: uppercase; }
+h1 { font-family: var(--f-display); font-size: clamp(18px, 4.2vw, 30px); line-height: 1.4; margin: 14px 0 12px; text-wrap: balance; text-shadow: 3px 3px 0 var(--accent); }
+.lead { color: var(--muted); max-width: 64ch; margin: 0; }
+nav.roster { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+nav.roster a { font-family: var(--f-display); font-size: 10px; color: var(--fg); text-decoration: none; padding: 10px 12px; background: var(--panel); border: 2px solid var(--line); }
+nav.roster a:hover, nav.roster a:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; }
+
+h2.sec { font-family: var(--f-display); font-size: 13px; color: var(--gold); margin: 44px 0 16px; letter-spacing: .06em; }
+.how { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 24px; align-items: start; }
+.how ol { margin: 0; padding-left: 22px; display: grid; gap: 10px; }
+.how li::marker { font-family: var(--f-display); font-size: 11px; color: var(--accent); }
+.how figure { margin: 0; background: var(--panel); border: 2px solid var(--line); padding: 10px; }
+.how figure img { display: block; width: 100%; image-rendering: pixelated; background: #f3f5fb; }
+.how figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.note { margin-top: 18px; padding: 12px 14px; background: var(--panel-2); border-left: 4px solid var(--gold); font-size: 14px; }
+code { font-family: var(--f-mono); font-size: .88em; background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+
+.card { margin-top: 22px; background: var(--panel); border: 2px solid var(--line); scroll-margin-top: 16px; }
+.who { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 18px; padding: 18px; border-bottom: 2px solid var(--line); }
+.who img { width: 120px; height: 200px; object-fit: cover; object-position: top; background: #f3f5fb; image-rendering: pixelated; border: 2px solid var(--line); }
+.meta h2 { font-family: var(--f-display); font-size: 15px; line-height: 1.5; margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.num { color: var(--gold); font-size: 11px; }
+.tag { font-family: var(--f-display); font-size: 8px; padding: 5px 7px; background: var(--accent); color: #fff; }
+.moves { margin: 0 0 12px; color: var(--muted); }
+dl { margin: 0; display: grid; gap: 6px; font-size: 14px; }
+dl div { display: flex; flex-wrap: wrap; gap: 10px; }
+dt { min-width: 92px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding-top: 2px; }
+dd { margin: 0; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.swatch { width: 16px; height: 16px; border: 2px solid #fff; display: inline-block; }
+
+.prompt { position: relative; }
+.prompt pre { margin: 0; padding: 18px; padding-top: 56px; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: #dcdcf0; background: #0c0e20; max-height: 420px; overflow: auto; }
+.prompt.small pre { max-height: none; padding-top: 50px; }
+.copy { position: absolute; top: 12px; right: 12px; font-family: var(--f-display); font-size: 10px; padding: 10px 12px; cursor: pointer; color: #fff; background: var(--accent); border: 0; box-shadow: 3px 3px 0 #000; }
+.copy:hover { filter: brightness(1.12); }
+.copy:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.copy:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.copy.done { background: var(--ok); color: #0c0e20; }
+
+.fixes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.fix { background: var(--panel); border: 2px solid var(--line); }
+.fix h3 { font-size: 14px; margin: 0; padding: 12px 14px; border-bottom: 2px solid var(--line); }
+footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
+
+@media (max-width: 720px) {
+  .how { grid-template-columns: 1fr; }
+  .who { grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding: 14px; }
+  .who img { width: 84px; height: 150px; }
+  dt { min-width: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">UFC Uninta Marketing · sprites</div>
+    <h1>Prompts de Sprites para o Gemini</h1>
+    <p class="lead">Um prompt completo para cada lutador. Cada um já diz qual pessoa da foto do grupo usar, a cor do fundo para recortar e a lista de animações de que o jogo precisa.</p>
+    <nav class="roster" aria-label="Personagens">{{NAV}}</nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <h2 class="sec">Como usar</h2>
+  <div class="how">
+    <div>
+      <ol>
+        <li>No Gemini, abra uma conversa nova e escolha <strong>Criar imagem</strong>. Se der para escolher o formato, use retrato (3:4 ou 9:16).</li>
+        <li>Anexe a <strong>foto do grupo</strong> (a mesma ao lado). Para o rosto ficar mais parecido, anexe também o recorte individual da pessoa.</li>
+        <li>Toque em <strong>Copiar prompt</strong> no card do personagem, cole no Gemini e envie.</li>
+        <li>Gere 2 ou 3 vezes e fique com a melhor. Use os <a href="#correcoes" style="color:var(--gold)">prompts de correção</a> se algo vier errado.</li>
+        <li>Baixe a imagem (de preferência em PNG) e salve com o nome indicado no card. Depois me mande que eu recorto e coloco no jogo.</li>
+      </ol>
+      <div class="note">Use <strong>uma conversa por personagem</strong>. Assim o Gemini não mistura rostos de lutadores diferentes.</div>
+    </div>
+    <figure>
+      <img src="{{GROUP}}" alt="Foto do grupo usada como referência, com os 7 personagens da esquerda para a direita">
+      <figcaption>Ordem da esquerda para a direita: Gaby, Adriano, Rogério, Barba, Angelo, Kaisson, Alicia. Os prompts usam essa posição.</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="sec">Lutadores</h2>
+  {{CARDS}}
+
+  <h2 class="sec" id="correcoes">Prompts de correção</h2>
+  <p style="color:var(--muted);margin:0 0 14px">Envie na mesma conversa do personagem. Troque o que estiver entre [colchetes]. Para o Rogério, o fundo é verde <code>#00FF00</code>.</p>
+  <div class="fixes">{{FIXES}}</div>
+
+  <footer>Os recortes individuais estão na pasta <code>assets/reference/elenco/</code> do projeto. Para mudar um golpe, edite <code>tools/build_prompt_guide.py</code> e gere a página de novo.</footer>
+</main>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const pre = document.getElementById(btn.dataset.target);
+    const label = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(pre.textContent);
+      btn.textContent = "Copiado!";
+    } catch (e) {
+      const r = document.createRange(); r.selectNodeContents(pre);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Selecionado: Ctrl+C";
+    }
+    btn.classList.add("done");
+    setTimeout(() => { btn.textContent = label; btn.classList.remove("done"); }, 1800);
+  });
+});
+</script>

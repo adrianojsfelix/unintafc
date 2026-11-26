@@ -32,6 +32,7 @@ P2: setas · Enter · `.` · `/` (qualquer tecla do P2 assume o lugar da CPU). `
 | `tools/slice_sheet.py` | Fatia folhas com caixas magenta sobre verde (Gaby) e monta `atlas.png` + `atlas.json` |
 | `tools/slice_white.py` | Fatia folhas sobre fundo liso (branco, ou magenta/verde com `--bg`): faixas e nº de quadros por linha em `REGIONS` (detectados sozinhos se faltarem), escala automática para ~112 px |
 | `assets/reference/elenco/` | Recorte de cada pessoa do elenco, para anexar no Gemini como referência |
+| `docs/PROMPTS_GEMINI.md`, `docs/prompts_gemini.html` | Prompts prontos de cada personagem para copiar no Gemini (gerados por `tools/build_prompt_guide.py`) |
 | `docs/SPRITES_GEMINI.md` | Como gerar folhas de sprites no Gemini: cor de fundo, prompts prontos de cada personagem |
 | `src/characters.js` | Animações e golpes de cada personagem |
 | `assets/sprites/<id>/atlas.*` | Quadros do personagem, paleta indexada de 128 cores, âncora nos pés |
